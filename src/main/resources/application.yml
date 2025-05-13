@@ -1,0 +1,14 @@
+server:
+  port: 8192
+
+spring:
+  application:
+    name: ticketera-auth
+  datasource:
+    username: user
+    password: password
+    url:  jdbc:postgresql://localhost:5432/authticketera
+  flyway:
+    url: jdbc:postgresql://localhost:5432/authticketera
+    user: user
+    password: password
