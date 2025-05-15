@@ -1,0 +1,20 @@
+package com.ticketera.auth.dto.request
+
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
+
+data class SignInRequest(
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    val email: String,
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Pattern(
+        regexp = "^(?=.*[!@#\$%^&*(),.?\":{}|<>]).{8,}$",
+        message = "Password must contain at least one special character"
+    )
+    val pass: String
+)
