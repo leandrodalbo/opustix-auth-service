@@ -40,6 +40,10 @@ class UserRepositoryTest {
     @Autowired
     private val repository: UserRepository? = null
 
+    @Test
+    fun shouldCheckUserByEmail() {
+        assertThat(repository?.existsByEmail("user@example.com")).isTrue()
+    }
 
     @Test
     fun shouldAllUsers() {
@@ -48,7 +52,7 @@ class UserRepositoryTest {
         assertThat(user?.id).isNotNull()
         assertThat(user?.email).isNotNull()
         assertThat(user?.password).isNotNull()
-        assertThat(user?.roles).contains(Role.USER)
+        assertThat(user?.roles()).contains(Role.USER)
         assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
 
     }
