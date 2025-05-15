@@ -24,7 +24,7 @@ class AuthService(private val userRepository: UserRepository, private val passwo
             null,
             signInRequest.email,
             passwordEncoder.encode(signInRequest.pass),
-            setOf(Role.USER),
+            Role.USER.name,
             AuthProvider.LOCAL,
             false
         )

@@ -24,9 +24,8 @@ data class User(
     @Column(nullable = false)
     val password: String,
 
-    @Column(name = "roles", columnDefinition = "role_type[]", nullable = false)
-    @Enumerated(EnumType.STRING)
-    val roles: Set<Role> = emptySet(),
+    @Column(name = "roles", nullable = false)
+    val roles: String = "",
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
@@ -34,4 +33,10 @@ data class User(
 
     @Column(name = "is_verified", nullable = false)
     val isVerified: Boolean
-)
+) {
+
+    fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
+
+    fun withRoles(roles: Set<Role>) =
+        copy(this.id, this.email, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
+}

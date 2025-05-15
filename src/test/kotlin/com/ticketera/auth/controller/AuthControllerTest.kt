@@ -49,4 +49,19 @@ class AuthControllerTest {
         verify { authService.signIn(signInRequest) }
     }
 
+    @Test
+    fun `should fail with invalid email or pass`() {
+        val invalidData = SignInRequest("notemail", "234notsafe")
+
+        mockMvc.post("/auth/signin")
+        {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(invalidData)
+        }.andExpect {
+            status { is5xxServerError() }
+            content { "Request Failed" }
+        }
+
+    }
+
 }

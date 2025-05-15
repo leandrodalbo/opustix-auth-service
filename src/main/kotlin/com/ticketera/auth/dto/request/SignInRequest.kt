@@ -6,13 +6,13 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 data class SignInRequest(
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @field:Email(message = "Invalid email format")
+    @field:NotBlank(message = "Email is required")
     val email: String,
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    @Pattern(
+    @field:NotBlank(message = "Password is required")
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    @field:Pattern(
         regexp = "^(?=.*[!@#\$%^&*(),.?\":{}|<>]).{8,}$",
         message = "Password must contain at least one special character"
     )

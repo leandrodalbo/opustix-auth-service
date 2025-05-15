@@ -26,7 +26,7 @@ class AuthServiceTest {
 
     private val user = User(
         UUID.randomUUID(), "user@email.com", "encodedPassword",
-        setOf(Role.USER), AuthProvider.LOCAL, false
+        Role.USER.name, AuthProvider.LOCAL, false
     )
 
     @Test
