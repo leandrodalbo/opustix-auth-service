@@ -1,6 +1,8 @@
 package com.ticketera.auth.controller
 
+import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
@@ -14,4 +16,8 @@ class AuthController(private val authService: AuthService) {
 
     @PostMapping("/signin")
     fun signIn(@Valid @RequestBody request: SignInRequest) = authService.signIn(request)
+
+    @PostMapping("/login")
+    fun logIn(@RequestBody request: LoginRequest) = LoginResponse(authService.login(request), "Bearer")
+
 }

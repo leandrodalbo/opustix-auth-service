@@ -46,6 +46,18 @@ class UserRepositoryTest {
     }
 
     @Test
+    fun shouldFindAUserByEmail() {
+        val user = repository?.findByEmail("user@example.com")
+
+        assertThat(user?.id).isNotNull()
+        assertThat(user?.email).isNotNull()
+        assertThat(user?.password).isNotNull()
+        assertThat(user?.roles()).contains(Role.USER)
+        assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+
+    }
+
+    @Test
     fun shouldAllUsers() {
         val user = repository?.findAll()?.get(0)
 

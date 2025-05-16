@@ -1,5 +1,6 @@
 package com.ticketera.auth.dto.request
 
+
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -18,3 +19,5 @@ data class SignInRequest(
     )
     val pass: String
 )
+
+data class LoginRequest(val email: String, val pass: String)

@@ -39,4 +39,7 @@ data class User(
 
     fun withRoles(roles: Set<Role>) =
         copy(this.id, this.email, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
+
+
+    fun tokenString() = "email:${this.email}|roles:${this.roles}|authprovider:${authProvider}|verified:${isVerified}"
 }

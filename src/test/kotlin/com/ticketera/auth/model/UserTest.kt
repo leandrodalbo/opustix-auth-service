@@ -1,8 +1,5 @@
-package com.ticketera.auth
+package com.ticketera.auth.model
 
-import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.Role
-import com.ticketera.auth.model.User
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -25,6 +22,11 @@ class UserTest {
     @Test
     fun itShouldGiveMeAUserWithMoreRoles() {
         assertThat(user.withRoles(setOf(Role.USER, Role.MANAGER)).roles).isEqualTo("USER,MANAGER")
+    }
+
+    @Test
+    fun itShouldGenerateATokenString() {
+        assertThat(user.tokenString()).isEqualTo("email:user@mail.com|roles:USER|authprovider:LOCAL|verified:false")
     }
 
 }

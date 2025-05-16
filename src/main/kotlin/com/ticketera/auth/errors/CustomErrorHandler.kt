@@ -21,4 +21,10 @@ class CustomErrorHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body<String>(ex.message)
     }
+
+    @ExceptionHandler(InvalidUserException::class)
+    fun handleInvalidUser(ex: Exception): ResponseEntity<String> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body<String>(ex.message)
+    }
 }
