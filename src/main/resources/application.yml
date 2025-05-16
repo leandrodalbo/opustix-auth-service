@@ -12,3 +12,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/authticketera
     user: user
     password: password
+
+jwtprops:
+  secret: ilWsuZYs6rE8a6zo7VaTvHwMADbSniCxUwoszjdXvldRgMcKJmgo02mR4PwM03xSr7Ou3e9gfvnw9EkelBik7w==
+  expiration: 3600000

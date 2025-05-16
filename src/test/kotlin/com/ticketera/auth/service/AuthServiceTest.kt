@@ -1,7 +1,11 @@
 package com.ticketera.auth.service
 
 
+import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.errors.InvalidUserException
+import com.ticketera.auth.errors.Message
+import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.AuthProvider
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
@@ -19,10 +23,11 @@ class AuthServiceTest {
 
     private val passwordEncoder: PasswordEncoder = mockk()
     private val userRepository: UserRepository = mockk()
-
-    private val authService = AuthService(userRepository, passwordEncoder)
+    private val tokenManager: TokenManager = mockk()
+    private val authService = AuthService(userRepository, passwordEncoder, tokenManager)
 
     private val signInRequest = SignInRequest("user@email.com", "1aads@34b")
+    private val loginRequest = LoginRequest("user@email.com", "1aads@34b")
 
     private val user = User(
         UUID.randomUUID(), "user@email.com", "encodedPassword",
@@ -51,6 +56,33 @@ class AuthServiceTest {
         verify { userRepository.existsByEmail(any()) }
         verify { userRepository.save(any()) }
         verify { passwordEncoder.encode(any()) }
+    }
+
+
+    @Test
+    fun shouldNotLoginThePasswordIsNotMatching() {
+        every { userRepository.findByEmail(any()) } returns user.copy(password = "invalidpass")
+        every { passwordEncoder.matches(any(), any()) } returns false
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.login(loginRequest) }
+            .withMessage(Message.INVALID_PASSWORD.text)
+
+        verify { userRepository.findByEmail(any()) }
+        verify { passwordEncoder.matches(any(), any()) }
+    }
+
+    @Test
+    fun shouldSuccessfullyLogin() {
+        every { userRepository.findByEmail(any()) } returns user
+        every { passwordEncoder.matches(any(), any()) } returns true
+        every { tokenManager.generateToken(any()) } returns "9some4user2token0"
+
+        assertThat(authService.login(loginRequest)).isNotNull()
+
+        verify { userRepository.findByEmail(any()) }
+        verify { passwordEncoder.matches(any(), any()) }
+        verify { tokenManager.generateToken(any()) }
     }
 
 }

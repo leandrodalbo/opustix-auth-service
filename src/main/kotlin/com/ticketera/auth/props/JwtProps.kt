@@ -1,3 +1,6 @@
 package com.ticketera.auth.props
 
-data class JwtProps()
+import org.springframework.boot.context.properties.ConfigurationProperties
+
+@ConfigurationProperties(prefix = "jwtprops")
+data class JwtProps(val secret:String, val expiration: Long)

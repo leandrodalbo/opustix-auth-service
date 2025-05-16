@@ -1,4 +1,3 @@
 package com.ticketera.auth.errors
 
-class exceptions {
-}
+class InvalidUserException(message: String) : Exception(message)
