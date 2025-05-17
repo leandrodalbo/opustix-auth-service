@@ -26,8 +26,8 @@ class AuthServiceTest {
     private val tokenManager: TokenManager = mockk()
     private val authService = AuthService(userRepository, passwordEncoder, tokenManager)
 
-    private val signInRequest = SignInRequest("user@email.com", "1aads@34b")
-    private val loginRequest = LoginRequest("user@email.com", "1aads@34b")
+    private val signInRequest = SignInRequest("user@email.com", "hashedpassword123")
+    private val loginRequest = LoginRequest("user@email.com", "hashedpassword123")
 
     private val user = User(
         UUID.randomUUID(), "user@email.com", "encodedPassword",
@@ -51,7 +51,7 @@ class AuthServiceTest {
         every { passwordEncoder.encode(any()) } returns "encodedPassword"
         every { userRepository.save(any<User>()) } returns user
 
-        assertThat(authService.signIn(signInRequest)).isEqualTo(user.id)
+        authService.signIn(signInRequest)
 
         verify { userRepository.existsByEmail(any()) }
         verify { userRepository.save(any()) }

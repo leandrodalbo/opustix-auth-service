@@ -1,11 +1,13 @@
 package com.ticketera.auth.jwt
 
+import com.ticketera.auth.errors.Message
 import com.ticketera.auth.model.User
 import com.ticketera.auth.props.JwtProps
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.util.Date
 import java.util.Base64
 
@@ -15,12 +17,12 @@ class TokenManager(private val jwtProps: JwtProps) {
     fun generateToken(user: User) =
         Jwts.builder()
             .setSubject(user.tokenString())
-            .setIssuedAt(Date())
+            .setIssuedAt(Date.from(Instant.now()))
             .setExpiration(Date(System.currentTimeMillis() + jwtProps.expiration))
             .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtProps.secret)), SignatureAlgorithm.HS512)
             .compact()
 
-    fun getUserInfo(token: String) = kotlin.runCatching {
+    fun getUserInfo(token: String): String = kotlin.runCatching {
         Jwts.parserBuilder()
             .setSigningKey(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtProps.secret)))
             .build()
@@ -28,16 +30,24 @@ class TokenManager(private val jwtProps: JwtProps) {
             .body
             .subject
 
-    }.getOrElse { "invalid-token" }
+    }.getOrElse { Message.INVALID_TOKEN.text }
 
     fun isAValidToken(token: String) = kotlin.runCatching {
-        Jwts.parserBuilder()
+        val expiration = Jwts.parserBuilder()
             .setSigningKey(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtProps.secret)))
             .build()
             .parseClaimsJws(token)
             .body
-            .subject.isNotEmpty()
+            .expiration.toInstant()
+
+        return expiration.minusMillis(Instant.now().toEpochMilli()).toEpochMilli() > 0
+
+
     }.getOrElse { false }
 
+    fun getUserEmail(token: String) = kotlin.runCatching {
+        val info = getUserInfo(token)
+        info.split("|")[0].split(":")[1].trim()
 
+    }.getOrElse { Message.INVALID_TOKEN.text }
 }
