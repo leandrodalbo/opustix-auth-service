@@ -1,5 +1,6 @@
 package com.ticketera.auth.jwt
 
+import com.ticketera.auth.errors.Message
 import com.ticketera.auth.model.AuthProvider
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
@@ -38,7 +39,7 @@ class TokenManagerTest {
     @Test
     fun shouldFailWithInvalidUserInfo() {
         val result = tokenManager.getUserInfo("somerandomstring2352252")
-        assertThat(result).isEqualTo("invalid-token")
+        assertThat(result).isEqualTo(Message.INVALID_TOKEN.text)
     }
 
 

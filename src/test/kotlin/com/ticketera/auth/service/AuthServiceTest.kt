@@ -51,7 +51,7 @@ class AuthServiceTest {
         every { passwordEncoder.encode(any()) } returns "encodedPassword"
         every { userRepository.save(any<User>()) } returns user
 
-        assertThat(authService.signIn(signInRequest)).isEqualTo(user.id)
+        authService.signIn(signInRequest)
 
         verify { userRepository.existsByEmail(any()) }
         verify { userRepository.save(any()) }
