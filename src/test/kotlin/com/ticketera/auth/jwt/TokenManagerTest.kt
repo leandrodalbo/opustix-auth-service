@@ -44,7 +44,9 @@ class TokenManagerTest {
 
     @Test
     fun shouldValidateAUserToken() {
-        val result = tokenManager.isAValidToken(tokenManager.generateToken(user))
+        val result = tokenManager.isAValidToken(
+            tokenManager.generateToken(user)
+        )
         assertThat(result).isTrue()
     }
 
@@ -52,5 +54,12 @@ class TokenManagerTest {
     fun shouldBeFalseWithInvalidToken() {
         val result = tokenManager.isAValidToken("somerandomstring2352252")
         assertThat(result).isFalse()
+    }
+
+
+    @Test
+    fun shouldGetUserEmailFromToken() {
+        val result = tokenManager.getUserEmail(tokenManager.generateToken(user))
+        assertThat(result).isEqualTo("user@mail.com")
     }
 }

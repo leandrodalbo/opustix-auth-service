@@ -10,3 +10,6 @@ spring:
   sql:
     init:
       mode: always
+jwtprops:
+  secret: ilWsuZYs6rE8a6zo7VaTvHwMADbSniCxUwoszjdXvldRgMcKJmgo02mR4PwM03xSr7Ou3e9gfvnw9EkelBik7w==
+  expiration: 3600000

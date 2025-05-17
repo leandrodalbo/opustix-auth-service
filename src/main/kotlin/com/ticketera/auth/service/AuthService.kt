@@ -32,7 +32,7 @@ class AuthService(
         return tokenManager.generateToken(user)
     }
 
-    fun signIn(signInRequest: SignInRequest): UUID? {
+    fun signIn(signInRequest: SignInRequest) {
 
         if (userRepository.existsByEmail(signInRequest.email)) {
             throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
@@ -47,7 +47,7 @@ class AuthService(
             false
         )
 
-        return userRepository.save(user).id
+        userRepository.save(user)
 
     }
 

@@ -12,19 +12,18 @@ class CustomErrorHandler {
     @ExceptionHandler(SQLException::class, Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<String> {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body<String>(Message.REQUEST_FAILED.text)
+            .body(Message.REQUEST_FAILED.text)
     }
-
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleInvalidArgument(ex: Exception): ResponseEntity<String> {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body<String>(ex.message)
+            .body(ex.message)
     }
 
     @ExceptionHandler(InvalidUserException::class)
     fun handleInvalidUser(ex: Exception): ResponseEntity<String> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body<String>(ex.message)
+            .body(ex.message)
     }
 }
