@@ -1,8 +1,8 @@
 package com.ticketera.auth.controller
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignInRequest
-import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -22,6 +22,12 @@ class AuthController(private val authService: AuthService) {
         authService.signIn(request)
 
     @PostMapping("/login")
-    fun logIn(@RequestBody request: LoginRequest) = LoginResponse(authService.login(request), "Bearer")
+    fun logIn(@RequestBody request: LoginRequest) = authService.login(request)
+
+    @PostMapping("/refresh")
+    fun refresh(@RequestBody request: RefreshTokenRequest) = authService.refresh(request)
+
+    @PostMapping("/logout")
+    fun logout(@RequestBody request: RefreshTokenRequest) = authService.logout(request)
 
 }

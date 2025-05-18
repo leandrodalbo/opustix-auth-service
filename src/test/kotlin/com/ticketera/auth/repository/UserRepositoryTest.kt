@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import java.util.*
 
 @DataJpaTest
 @AutoConfigureTestDatabase(
@@ -44,6 +45,15 @@ class UserRepositoryTest : AbstractContainerTest() {
         assertThat(user?.password).isNotNull()
         assertThat(user?.roles()).contains(Role.USER)
         assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+
+    }
+
+    @Test
+    fun shouldFindAUserByRefreshToken() {
+        val user = repository?.findByRefreshToken(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
+
+        assertThat(user?.id).isNotNull()
+        assertThat(user?.refreshToken).isEqualTo(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
 
     }
 }

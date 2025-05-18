@@ -2,6 +2,7 @@ package com.ticketera.auth.integrationtests
 
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignInRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
@@ -58,6 +59,38 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
     @Test
     fun `should login an existing user`() {
         assertThat(loginUser()?.accessToken).isNotEmpty()
+    }
+
+    @Test
+    fun `should refresh the token`() {
+        val login = loginUser()
+        val req = RefreshTokenRequest(login?.refreshToken!!)
+
+        val resp = restClient.post()
+            .uri("/auth/refresh")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
+            .retrieve()
+            .body(LoginResponse::class.java)
+
+        assertThat(resp?.accessToken).isEqualTo(login.accessToken)
+
+    }
+
+    @Test
+    fun `should logout`() {
+        val login = loginUser()
+        val req = RefreshTokenRequest(login?.refreshToken!!)
+
+        val resp = restClient.post()
+            .uri("/auth/logout")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
+
     }
 
     @Test
