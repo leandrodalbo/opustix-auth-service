@@ -8,5 +8,6 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     roles VARCHAR(255) NOT NULL,
     auth_provider VARCHAR(100) NOT NULL,
-    is_verified BOOLEAN NOT NULL
+    is_verified BOOLEAN NOT NULL,
+    refresh_token UUID
 );

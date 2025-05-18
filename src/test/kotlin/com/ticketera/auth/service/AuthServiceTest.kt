@@ -2,6 +2,7 @@ package com.ticketera.auth.service
 
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignInRequest
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
@@ -10,9 +11,9 @@ import com.ticketera.auth.model.AuthProvider
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
 import com.ticketera.auth.repository.UserRepository
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.every
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
@@ -77,12 +78,62 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns user
         every { passwordEncoder.matches(any(), any()) } returns true
         every { tokenManager.generateToken(any()) } returns "9some4user2token0"
+        every { userRepository.save(any()) } returns user.copy(refreshToken = UUID.randomUUID())
 
         assertThat(authService.login(loginRequest)).isNotNull()
 
         verify { userRepository.findByEmail(any()) }
         verify { passwordEncoder.matches(any(), any()) }
         verify { tokenManager.generateToken(any()) }
+        verify { userRepository.save(any()) }
     }
 
+    @Test
+    fun shouldRefreshAUserToken() {
+        val refreshToken = UUID.randomUUID()
+        every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
+        every { userRepository.save(any()) } returns user.copy(refreshToken = UUID.randomUUID())
+        every { tokenManager.generateToken(any()) } returns "9some4user2token0"
+
+        assertThat(authService.refresh(RefreshTokenRequest(refreshToken)).refreshToken).isNotEqualTo(refreshToken)
+
+        verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.save(any()) }
+        verify { tokenManager.generateToken(any()) }
+    }
+
+    @Test
+    fun shouldNotRefreshAUserToken() {
+        every { userRepository.findByRefreshToken(any()) } returns null
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.refresh(RefreshTokenRequest(UUID.randomUUID())) }
+            .withMessage(Message.INVALID_TOKEN.text)
+
+        verify { userRepository.findByRefreshToken(any()) }
+    }
+
+    @Test
+    fun shouldFailOnLogout() {
+        every { userRepository.findByRefreshToken(any()) } returns null
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.logout(RefreshTokenRequest(UUID.randomUUID())) }
+            .withMessage(Message.INVALID_TOKEN.text)
+
+        verify { userRepository.findByRefreshToken(any()) }
+    }
+
+    @Test
+    fun shouldSuccessfullyLogout() {
+        val refreshToken = UUID.randomUUID()
+        every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
+        every { userRepository.save(any()) } returns user.copy(refreshToken = null)
+
+        authService.logout(RefreshTokenRequest(refreshToken))
+
+        verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.save(any()) }
+
+    }
 }

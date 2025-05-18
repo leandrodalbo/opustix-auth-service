@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import java.util.UUID
 
 data class SignInRequest(
     @field:Email(message = "Invalid email format")
@@ -21,3 +22,5 @@ data class SignInRequest(
 )
 
 data class LoginRequest(val email: String, val pass: String)
+
+data class RefreshTokenRequest(val refreshToken: UUID)

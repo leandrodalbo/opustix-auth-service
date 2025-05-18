@@ -32,7 +32,10 @@ data class User(
     val authProvider: AuthProvider,
 
     @Column(name = "is_verified", nullable = false)
-    val isVerified: Boolean
+    val isVerified: Boolean,
+
+    @Column(name = "refresh_token", nullable = true)
+    val refreshToken: UUID? = null
 ) {
 
     fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()

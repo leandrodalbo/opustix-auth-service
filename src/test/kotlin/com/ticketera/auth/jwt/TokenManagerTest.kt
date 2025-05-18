@@ -7,6 +7,7 @@ import com.ticketera.auth.model.User
 import com.ticketera.auth.props.JwtProps
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class TokenManagerTest {
 
@@ -14,7 +15,7 @@ class TokenManagerTest {
         JwtProps("9RUNnGEu9PNYKQtl+EHpYGBb4Lt5hpA76nsIrNTsTx133eLHJ/R6YyMKq6CS48cUWfbRcy+ZYs/qRMIVu8oewQ==", 3600000)
 
     private val user = User(
-        null,
+        UUID.randomUUID(),
         "user@mail.com",
         "a32dga34adfv34",
         Role.USER.name,
@@ -42,7 +43,6 @@ class TokenManagerTest {
         assertThat(result).isEqualTo(Message.INVALID_TOKEN.text)
     }
 
-
     @Test
     fun shouldValidateAUserToken() {
         val result = tokenManager.isAValidToken(
@@ -57,10 +57,10 @@ class TokenManagerTest {
         assertThat(result).isFalse()
     }
 
-
     @Test
     fun shouldGetUserEmailFromToken() {
         val result = tokenManager.getUserEmail(tokenManager.generateToken(user))
         assertThat(result).isEqualTo("user@mail.com")
     }
+
 }
