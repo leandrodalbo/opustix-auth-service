@@ -47,8 +47,9 @@ class TokenManager(private val jwtProps: JwtProps) {
     }.getOrElse { false }
 
     fun getUserEmail(token: String) = kotlin.runCatching {
-        val info = getUserInfo(token)
-        info.split("|")[0].split(":")[1].trim()
-
+        tokenDataToArray(getUserInfo(token))[0]
     }.getOrElse { Message.INVALID_TOKEN.text }
+
+
+    private fun tokenDataToArray(tokenData: String) = tokenData.split(User.TOKEN_SEPARATOR)
 }
