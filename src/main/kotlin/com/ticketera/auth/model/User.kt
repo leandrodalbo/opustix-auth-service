@@ -44,5 +44,11 @@ data class User(
         copy(this.id, this.email, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
 
 
-    fun tokenString() = "email:${this.email}|roles:${this.roles}|authprovider:${authProvider}|verified:${isVerified}"
+    fun tokenString() =
+        "${this.email}${TOKEN_SEPARATOR}${this.roles}${TOKEN_SEPARATOR}${authProvider}${TOKEN_SEPARATOR}${isVerified}${TOKEN_SEPARATOR}${refreshToken ?: DEFAULT_REFRESH_VALUE}"
+
+    companion object {
+        val TOKEN_SEPARATOR = "|"
+        val DEFAULT_REFRESH_VALUE = "NO_TOKEN"
+    }
 }

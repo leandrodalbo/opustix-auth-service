@@ -29,7 +29,7 @@ class TokenAuth(
 
             val userDetails = userDetailsService.loadUserByUsername(tokenManager.getUserEmail(token))
 
-            if (tokenManager.isAValidToken(token)) {
+            if (tokenManager.isAValidToken(token)&& userDetails.password.isNotEmpty()) {
                 val authToken =
                     UsernamePasswordAuthenticationToken(userDetails, userDetails.password, userDetails.authorities)
                 authToken.details = WebAuthenticationDetailsSource().buildDetails(request)

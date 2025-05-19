@@ -2,6 +2,7 @@ package com.ticketera.auth.model
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class UserTest {
 
@@ -12,6 +13,7 @@ class UserTest {
         Role.USER.name,
         AuthProvider.LOCAL,
         false
+
     )
 
     @Test
@@ -26,7 +28,8 @@ class UserTest {
 
     @Test
     fun itShouldGenerateATokenString() {
-        assertThat(user.tokenString()).isEqualTo("email:user@mail.com|roles:USER|authprovider:LOCAL|verified:false")
+        val token = UUID.randomUUID();
+        assertThat(user.copy(refreshToken = token).tokenString()).isEqualTo("user@mail.com|USER|LOCAL|false|${token}")
     }
 
 }

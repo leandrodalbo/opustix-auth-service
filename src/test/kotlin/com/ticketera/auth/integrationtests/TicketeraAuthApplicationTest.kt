@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.toEntity
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -44,16 +45,41 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
     @Test
     fun itShouldGetTheUserProfile() {
-        val token = loginUser()?.accessToken
+        val user = loginUser()
 
         val resp = restClient.get()
             .uri("/profiles/user")
-            .header("Authorization", "Bearer $token")
+            .header("Authorization", "Bearer ${user?.accessToken}")
             .retrieve()
             .toEntity(String::class.java)
 
         assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(resp.body).isEqualTo("email:user@example.com|roles:USER,ADMIN|authprovider:LOCAL|verified:true")
+        assertThat(resp.body).isEqualTo("user@example.com|USER,ADMIN|LOCAL|true|${user?.refreshToken}")
+    }
+
+    @Test
+    fun itShouldGetTheUserProfileAfterLogout() {
+        val user = loginUser()
+        val req = RefreshTokenRequest(user?.refreshToken!!)
+
+        val logoutResponse = restClient.post()
+            .uri("/auth/logout")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
+            .retrieve()
+            .toBodilessEntity()
+
+
+        assertThatExceptionOfType(HttpClientErrorException::class.java)
+            .isThrownBy {
+                restClient.get()
+                    .uri("/profiles/user")
+                    .header("Authorization", "Bearer ${user.accessToken}")
+                    .retrieve()
+                    .toEntity(String::class.java)
+            }.withMessageContaining("403")
+
+        assertThat(logoutResponse.statusCode).isEqualTo(HttpStatus.OK)
     }
 
     @Test
@@ -73,7 +99,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
             .retrieve()
             .body(LoginResponse::class.java)
 
-        assertThat(resp?.accessToken).isEqualTo(login.accessToken)
+        assertThat(resp?.accessToken).isNotEqualTo(login.accessToken)
 
     }
 
