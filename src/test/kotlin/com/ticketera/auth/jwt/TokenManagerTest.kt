@@ -59,7 +59,13 @@ class TokenManagerTest {
 
     @Test
     fun shouldGetUserEmailFromToken() {
-        val result = tokenManager.getUserEmail(tokenManager.generateToken(user))
+        val result = tokenManager.getUserEmailFromToken(tokenManager.generateToken(user))
+        assertThat(result).isEqualTo("user@mail.com")
+    }
+
+    @Test
+    fun shouldGetUserEmailFromTokenString() {
+        val result = tokenManager.getUserEmailFromTokenString(user.tokenString())
         assertThat(result).isEqualTo("user@mail.com")
     }
 

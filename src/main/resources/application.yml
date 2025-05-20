@@ -1,7 +1,23 @@
 server:
-  port: 8192
+  port: 8080
 
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
   application:
     name: ticketera-auth
   datasource:
@@ -14,5 +30,5 @@ spring:
     password: password
 
 jwtprops:
-  secret: ilWsuZYs6rE8a6zo7VaTvHwMADbSniCxUwoszjdXvldRgMcKJmgo02mR4PwM03xSr7Ou3e9gfvnw9EkelBik7w==
+  secret:
   expiration: 3600000
