@@ -25,8 +25,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers(
-                    "/auth/**", "/oauth2/**", // Handles redirect URIs and client flows
-                    "/login/oauth2/**"
+                    "/auth/**","/oauth2/**","/login/oauth2/**"
                 ).permitAll()
                     .anyRequest().authenticated()
             }
