@@ -30,5 +30,5 @@ spring:
     password: password
 
 jwtprops:
-  secret: 
+  secret:
   expiration: 3600000

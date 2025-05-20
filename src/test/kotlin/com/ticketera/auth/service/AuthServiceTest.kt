@@ -136,4 +136,38 @@ class AuthServiceTest {
         verify { userRepository.save(any()) }
 
     }
+
+    @Test
+    fun itShouldSaveAnewUser() {
+        every { userRepository.findByEmail(any()) } returns null
+        every { userRepository.save(any()) } returns user
+
+        authService.findOrCreateUser("newuser@gmail.com")
+
+        verify { userRepository.findByEmail(any()) }
+        verify { userRepository.save(any()) }
+    }
+
+    @Test
+    fun itShouldUpdateAnExistingUser() {
+        every { userRepository.findByEmail(any()) } returns user
+        every { userRepository.save(any()) } returns user
+
+        authService.findOrCreateUser(user.email)
+
+        verify { userRepository.findByEmail(any()) }
+        verify { userRepository.save(any()) }
+    }
+
+    @Test
+    fun itVerifyUserRefreshTokeIsNull() {
+        every { userRepository.findByEmail(any()) } returns user
+        every { tokenManager.getUserEmailFromTokenString(any()) } returns user.email
+
+        assertThat(authService.canRefresh(user.email)).isFalse()
+
+        verify { tokenManager.getUserEmailFromTokenString(any()) }
+        verify { userRepository.findByEmail(any()) }
+
+    }
 }
