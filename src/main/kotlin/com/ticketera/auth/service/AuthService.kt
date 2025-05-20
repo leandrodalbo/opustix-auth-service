@@ -74,4 +74,23 @@ class AuthService(
 
     }
 
+
+    fun findOrCreateUser(email: String): User {
+        return userRepository.findByEmail(email).let {
+            userRepository.save(
+                it?.copy(refreshToken = UUID.randomUUID()) ?: User(
+                    email = email,
+                    password = "",
+                    roles = Role.USER.name,
+                    authProvider = AuthProvider.GOOGLE,
+                    isVerified = false,
+                    refreshToken = UUID.randomUUID()
+                )
+            )
+        }
+    }
+
+    fun canRefresh(tokenString: String) =
+        userRepository.findByEmail(tokenManager.getUserEmailFromTokenString(tokenString))?.refreshToken != null
+
 }

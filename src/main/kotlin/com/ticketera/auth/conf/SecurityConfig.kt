@@ -1,5 +1,6 @@
 package com.ticketera.auth.conf
 
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -15,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @EnableWebSecurity
 class SecurityConfig(
     private val tokenAuth: OncePerRequestFilter,
+    private val oAuth2Handler: OAuth2Handler
 ) {
 
     @Bean
@@ -22,11 +24,26 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/auth/**").permitAll()
+                it.requestMatchers(
+                    "/auth/**", "/oauth2/**", // Handles redirect URIs and client flows
+                    "/login/oauth2/**"
+                ).permitAll()
                     .anyRequest().authenticated()
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .oauth2Login {
+                it.successHandler(oAuth2Handler)
+            }
             .addFilterBefore(tokenAuth, UsernamePasswordAuthenticationFilter::class.java)
+
+        http.exceptionHandling {
+            it.authenticationEntryPoint { _, response, _ ->
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+            }
+            it.accessDeniedHandler { _, response, _ ->
+                response.sendError(HttpServletResponse.SC_FORBIDDEN)
+            }
+        }
 
         return http.build()
     }

@@ -19,9 +19,14 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.toEntity
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = [
+        "spring.security.oauth2.client.registration.google.client-id=fake",
+        "spring.security.oauth2.client.registration.google.client-secret=fake"
+    ]
+)
 @AutoConfigureMockMvc
 class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
@@ -77,7 +82,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
                     .header("Authorization", "Bearer ${user.accessToken}")
                     .retrieve()
                     .toEntity(String::class.java)
-            }.withMessageContaining("403")
+            }.withMessageContaining("401")
 
         assertThat(logoutResponse.statusCode).isEqualTo(HttpStatus.OK)
     }

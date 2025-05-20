@@ -1,9 +1,12 @@
 package com.ticketera.auth.conf
 
+import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
+import com.ticketera.auth.service.AuthService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -14,7 +17,8 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class TokenAuth(
     private val tokenManager: TokenManager,
-    private val userDetailsService: UserDetailsService
+    private val userDetailsService: UserDetailsService,
+    private val authService: AuthService
 ) : OncePerRequestFilter() {
 
     override fun doFilterInternal(
@@ -27,11 +31,13 @@ class TokenAuth(
 
         if (token != null && SecurityContextHolder.getContext().authentication == null) {
 
-            val userDetails = userDetailsService.loadUserByUsername(tokenManager.getUserEmail(token))
+            val user = userDetailsService.loadUserByUsername(tokenManager.getUserEmailFromToken(token))
 
-            if (tokenManager.isAValidToken(token)&& userDetails.password.isNotEmpty()) {
+            if (!authService.canRefresh(user.username)) throw AccessDeniedException(Message.INVALID_TOKEN.text)
+
+            if (tokenManager.isAValidToken(token)) {
                 val authToken =
-                    UsernamePasswordAuthenticationToken(userDetails, userDetails.password, userDetails.authorities)
+                    UsernamePasswordAuthenticationToken(user, user.password, user.authorities)
                 authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
                 SecurityContextHolder.getContext().authentication = authToken
             }
