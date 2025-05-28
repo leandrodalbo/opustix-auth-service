@@ -8,6 +8,7 @@ import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
 import com.ticketera.auth.repository.UserRepository
@@ -142,7 +143,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser("newuser@gmail.com", "Joe Doe")
+        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -153,7 +154,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser(user.email, user.name)
+        authService.findOrCreateUser(OAuthData(user.email, user.name))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
