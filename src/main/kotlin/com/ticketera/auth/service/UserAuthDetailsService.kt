@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
 
 @Service
-class UserDetailsService(private val userRepository: UserRepository) :
+class UserAuthDetailsService(private val userRepository: UserRepository) :
     UserDetailsService {
     override fun loadUserByUsername(email: String): UserDetails {
         val user = userRepository.findByEmail(email)

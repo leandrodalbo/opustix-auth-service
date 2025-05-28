@@ -76,7 +76,6 @@ class AuthService(
 
     }
 
-
     fun findOrCreateUser(authData: OAuthData): User {
         return userRepository.findByEmail(authData.email).let {
             userRepository.save(
