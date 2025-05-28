@@ -1,2 +1,2 @@
 ALTER TABLE users
-ADD COLUMN refresh_token UUID;
+ADD COLUMN name VARCHAR(255) NOT NULL;

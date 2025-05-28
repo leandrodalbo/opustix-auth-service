@@ -54,5 +54,10 @@ class TokenManager(private val jwtProps: JwtProps) {
         tokenDataToArray(tokenString)[0]
     }.getOrElse { Message.INVALID_TOKEN.text }
 
-    private fun tokenDataToArray(tokenData: String) = tokenData.split(User.TOKEN_SEPARATOR)
+    private fun tokenDataToArray(tokenData: String): List<String> {
+        val bytes = Base64.getDecoder().decode(tokenData)
+        val stringData = String(bytes)
+        return stringData.split(User.TOKEN_SEPARATOR)
+    }
+
 }

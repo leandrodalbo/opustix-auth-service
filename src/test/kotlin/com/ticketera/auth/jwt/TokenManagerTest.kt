@@ -17,6 +17,7 @@ class TokenManagerTest {
     private val user = User(
         UUID.randomUUID(),
         "user@mail.com",
+        "Joe Doe",
         "a32dga34adfv34",
         Role.USER.name,
         AuthProvider.LOCAL,

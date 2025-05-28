@@ -64,6 +64,7 @@ class AuthService(
         val user = User(
             null,
             signInRequest.email,
+            signInRequest.name,
             passwordEncoder.encode(signInRequest.pass),
             Role.USER.name,
             AuthProvider.LOCAL,
@@ -75,11 +76,12 @@ class AuthService(
     }
 
 
-    fun findOrCreateUser(email: String): User {
+    fun findOrCreateUser(email: String, name :String): User {
         return userRepository.findByEmail(email).let {
             userRepository.save(
                 it?.copy(refreshToken = UUID.randomUUID()) ?: User(
                     email = email,
+                    name = name,
                     password = "",
                     roles = Role.USER.name,
                     authProvider = AuthProvider.GOOGLE,

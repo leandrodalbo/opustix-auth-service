@@ -8,7 +8,8 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Column
 import jakarta.persistence.Enumerated
 import jakarta.persistence.EnumType
-import java.util.*
+import java.util.UUID
+import java.util.Base64
 
 @Entity
 @Table(name = "users")
@@ -20,6 +21,9 @@ data class User(
 
     @Column(nullable = false, unique = true)
     val email: String,
+
+    @Column(nullable = false, unique = false)
+    val name: String,
 
     @Column(nullable = false)
     val password: String,
@@ -41,11 +45,12 @@ data class User(
     fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
 
     fun withRoles(roles: Set<Role>) =
-        copy(this.id, this.email, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
+        copy(this.id, this.email, this.name, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
 
 
     fun tokenString() =
-        "${this.email}${TOKEN_SEPARATOR}${this.roles}${TOKEN_SEPARATOR}${authProvider}${TOKEN_SEPARATOR}${isVerified}${TOKEN_SEPARATOR}${refreshToken ?: DEFAULT_REFRESH_VALUE}"
+        Base64.getEncoder()
+            .encodeToString("${this.email}${TOKEN_SEPARATOR}${this.name}${TOKEN_SEPARATOR}${this.roles}${TOKEN_SEPARATOR}${authProvider}${TOKEN_SEPARATOR}${isVerified}${TOKEN_SEPARATOR}${refreshToken ?: DEFAULT_REFRESH_VALUE}".toByteArray())
 
     companion object {
         val TOKEN_SEPARATOR = "|"

@@ -27,11 +27,11 @@ class AuthServiceTest {
     private val tokenManager: TokenManager = mockk()
     private val authService = AuthService(userRepository, passwordEncoder, tokenManager)
 
-    private val signInRequest = SignInRequest("user@email.com", "hashedpassword123")
+    private val signInRequest = SignInRequest("user@email.com", "Joe Doe", "hashedpassword123")
     private val loginRequest = LoginRequest("user@email.com", "hashedpassword123")
 
     private val user = User(
-        UUID.randomUUID(), "user@email.com", "encodedPassword",
+        UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
         Role.USER.name, AuthProvider.LOCAL, false
     )
 
@@ -142,7 +142,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser("newuser@gmail.com")
+        authService.findOrCreateUser("newuser@gmail.com", "Joe Doe")
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -153,7 +153,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser(user.email)
+        authService.findOrCreateUser(user.email, user.name)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }

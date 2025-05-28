@@ -26,8 +26,9 @@ class OAuth2Handler(
     ) {
         val principal = authentication.principal as OAuth2User
         val email = principal.getAttribute<String>("email") ?: return
+        val name = principal.getAttribute<String>("name") ?: return
 
-        val user = authService.findOrCreateUser(email)
+        val user = authService.findOrCreateUser(email, name)
 
         val accessToken = tokenManager.generateToken(user)
 

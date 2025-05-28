@@ -12,6 +12,9 @@ data class SignInRequest(
     @field:NotBlank(message = "Email is required")
     val email: String,
 
+    @field:NotBlank(message = "Full name is required")
+    val name: String,
+
     @field:NotBlank(message = "Password is required")
     @field:Size(min = 8, message = "Password must be at least 8 characters")
     @field:Pattern(
