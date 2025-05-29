@@ -9,13 +9,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.web.filter.OncePerRequestFilter
+
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val tokenAuth: OncePerRequestFilter,
     private val oAuth2Handler: OAuth2Handler
 ) {
 
@@ -25,7 +23,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers(
-                    "/auth/**","/oauth2/**","/login/oauth2/**"
+                    "/auth/**", "/oauth2/**", "/login/oauth2/**"
                 ).permitAll()
                     .anyRequest().authenticated()
             }
@@ -33,7 +31,7 @@ class SecurityConfig(
             .oauth2Login {
                 it.successHandler(oAuth2Handler)
             }
-            .addFilterBefore(tokenAuth, UsernamePasswordAuthenticationFilter::class.java)
+
 
         http.exceptionHandling {
             it.authenticationEntryPoint { _, response, _ ->

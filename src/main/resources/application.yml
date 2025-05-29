@@ -2,6 +2,16 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: ticketera-auth
+  datasource:
+    username: user
+    password: password
+    url: jdbc:postgresql://localhost:5432/authticketera
+  flyway:
+    url: jdbc:postgresql://localhost:5432/authticketera
+    user: user
+    password: password
   security:
     oauth2:
       client:
@@ -13,21 +23,14 @@ spring:
             scope:
               - email
               - profile
+
         provider:
           google:
             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-  application:
-    name: ticketera-auth
-  datasource:
-    username: user
-    password: password
-    url:  jdbc:postgresql://localhost:5432/authticketera
-  flyway:
-    url: jdbc:postgresql://localhost:5432/authticketera
-    user: user
-    password: password
+
+
 
 jwtprops:
   secret:
