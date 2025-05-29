@@ -7,3 +7,4 @@ data class LoginResponse(
     val refreshToken: UUID? = null,
     val tokenType: String = "Bearer"
 )
+

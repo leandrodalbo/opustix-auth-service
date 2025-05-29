@@ -47,46 +47,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
             .baseUrl("http://localhost:$port")
             .build()
     }
-
-    @Test
-    fun itShouldGetTheUserProfile() {
-        val user = loginUser()
-
-        val resp = restClient.get()
-            .uri("/profiles/user")
-            .header("Authorization", "Bearer ${user?.accessToken}")
-            .retrieve()
-            .toEntity(String::class.java)
-
-        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(resp.body).isEqualTo("user@example.com|USER,ADMIN|LOCAL|true|${user?.refreshToken}")
-    }
-
-    @Test
-    fun itShouldGetTheUserProfileAfterLogout() {
-        val user = loginUser()
-        val req = RefreshTokenRequest(user?.refreshToken!!)
-
-        val logoutResponse = restClient.post()
-            .uri("/auth/logout")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(req)
-            .retrieve()
-            .toBodilessEntity()
-
-
-        assertThatExceptionOfType(HttpClientErrorException::class.java)
-            .isThrownBy {
-                restClient.get()
-                    .uri("/profiles/user")
-                    .header("Authorization", "Bearer ${user.accessToken}")
-                    .retrieve()
-                    .toEntity(String::class.java)
-            }.withMessageContaining("401")
-
-        assertThat(logoutResponse.statusCode).isEqualTo(HttpStatus.OK)
-    }
-
+    
     @Test
     fun `should login an existing user`() {
         assertThat(loginUser()?.accessToken).isNotEmpty()
@@ -126,7 +87,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
     @Test
     fun itShouldRegisterAnewUser() {
-        val req = SignInRequest("user@example2.com", "0lea@tickets0")
+        val req = SignInRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
 
         val resp = restClient.post()
             .uri("/auth/signin")

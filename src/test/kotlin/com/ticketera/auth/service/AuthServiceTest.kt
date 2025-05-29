@@ -8,6 +8,7 @@ import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
 import com.ticketera.auth.repository.UserRepository
@@ -27,11 +28,11 @@ class AuthServiceTest {
     private val tokenManager: TokenManager = mockk()
     private val authService = AuthService(userRepository, passwordEncoder, tokenManager)
 
-    private val signInRequest = SignInRequest("user@email.com", "hashedpassword123")
+    private val signInRequest = SignInRequest("user@email.com", "Joe Doe", "hashedpassword123")
     private val loginRequest = LoginRequest("user@email.com", "hashedpassword123")
 
     private val user = User(
-        UUID.randomUUID(), "user@email.com", "encodedPassword",
+        UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
         Role.USER.name, AuthProvider.LOCAL, false
     )
 
@@ -142,7 +143,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser("newuser@gmail.com")
+        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -153,7 +154,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
 
-        authService.findOrCreateUser(user.email)
+        authService.findOrCreateUser(OAuthData(user.email, user.name))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -162,11 +163,11 @@ class AuthServiceTest {
     @Test
     fun itVerifyUserRefreshTokeIsNull() {
         every { userRepository.findByEmail(any()) } returns user
-        every { tokenManager.getUserEmailFromTokenString(any()) } returns user.email
+        every { tokenManager.getEncodedUserEmail(any()) } returns user.email
 
         assertThat(authService.canRefresh(user.email)).isFalse()
 
-        verify { tokenManager.getUserEmailFromTokenString(any()) }
+        verify { tokenManager.getEncodedUserEmail(any()) }
         verify { userRepository.findByEmail(any()) }
 
     }

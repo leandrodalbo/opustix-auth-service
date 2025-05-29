@@ -10,14 +10,14 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
 
 @Service
-class UserDetailsService(private val userRepository: UserRepository) :
+class UserAuthDetailsService(private val userRepository: UserRepository) :
     UserDetailsService {
     override fun loadUserByUsername(email: String): UserDetails {
         val user = userRepository.findByEmail(email)
             ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
 
         return org.springframework.security.core.userdetails.User(
-            user.tokenString(),
+            user.name,
             user.password,
             user.roles().map { GrantedAuthority { it.name } }
         )

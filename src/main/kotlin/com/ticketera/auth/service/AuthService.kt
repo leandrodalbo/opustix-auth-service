@@ -8,6 +8,7 @@ import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.User
 import com.ticketera.auth.repository.UserRepository
@@ -64,6 +65,7 @@ class AuthService(
         val user = User(
             null,
             signInRequest.email,
+            signInRequest.name,
             passwordEncoder.encode(signInRequest.pass),
             Role.USER.name,
             AuthProvider.LOCAL,
@@ -74,12 +76,12 @@ class AuthService(
 
     }
 
-
-    fun findOrCreateUser(email: String): User {
-        return userRepository.findByEmail(email).let {
+    fun findOrCreateUser(authData: OAuthData): User {
+        return userRepository.findByEmail(authData.email).let {
             userRepository.save(
                 it?.copy(refreshToken = UUID.randomUUID()) ?: User(
-                    email = email,
+                    email = authData.email,
+                    name = authData.name,
                     password = "",
                     roles = Role.USER.name,
                     authProvider = AuthProvider.GOOGLE,
@@ -90,7 +92,6 @@ class AuthService(
         }
     }
 
-    fun canRefresh(tokenString: String) =
-        userRepository.findByEmail(tokenManager.getUserEmailFromTokenString(tokenString))?.refreshToken != null
-
+    fun canRefresh(userData: String) =
+        userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
 }
