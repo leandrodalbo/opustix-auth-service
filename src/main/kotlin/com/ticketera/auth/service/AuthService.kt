@@ -92,7 +92,6 @@ class AuthService(
         }
     }
 
-    fun canRefresh(tokenString: String) =
-        userRepository.findByEmail(tokenManager.getUserEmailFromTokenString(tokenString))?.refreshToken != null
-
+    fun canRefresh(userData: String) =
+        userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
 }

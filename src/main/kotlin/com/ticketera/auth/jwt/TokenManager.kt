@@ -17,7 +17,7 @@ class TokenManager(private val jwtProps: JwtProps) {
 
     fun generateToken(user: User) =
         Jwts.builder()
-            .setSubject(user.tokenString())
+            .setSubject(user.encoded())
             .setIssuedAt(Date.from(Instant.now()))
             .setExpiration(Date(System.currentTimeMillis() + jwtProps.expiration))
             .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtProps.secret)), SignatureAlgorithm.HS512)
@@ -47,17 +47,10 @@ class TokenManager(private val jwtProps: JwtProps) {
     }.getOrElse { false }
 
     fun getUserEmailFromToken(token: String) = kotlin.runCatching {
-        tokenDataToArray(getUserInfo(token))[0]
+        User.decode(getUserInfo(token)).email
     }.getOrElse { Message.INVALID_TOKEN.text }
 
-    fun getUserEmailFromTokenString(tokenString: String) = kotlin.runCatching {
-        tokenDataToArray(tokenString)[0]
+    fun getEncodedUserEmail(userData: String) = kotlin.runCatching {
+        User.decode(userData).email
     }.getOrElse { Message.INVALID_TOKEN.text }
-
-    private fun tokenDataToArray(tokenData: String): List<String> {
-        val bytes = Base64.getDecoder().decode(tokenData)
-        val stringData = String(bytes)
-        return stringData.split(User.TOKEN_SEPARATOR)
-    }
-
 }

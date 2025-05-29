@@ -17,7 +17,7 @@ class UserAuthDetailsService(private val userRepository: UserRepository) :
             ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
 
         return org.springframework.security.core.userdetails.User(
-            user.tokenString(),
+            user.name,
             user.password,
             user.roles().map { GrantedAuthority { it.name } }
         )

@@ -2,7 +2,6 @@ package com.ticketera.auth.model
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 class UserTest {
 
@@ -28,9 +27,21 @@ class UserTest {
     }
 
     @Test
-    fun itShouldGenerateATokenString() {
-        val token = UUID.randomUUID()
-        assertThat(user.copy(refreshToken = token).tokenString()).isNotNull()
+    fun itShouldEncodeTheUser() {
+        assertThat(user.encoded()).isNotNull()
+    }
+
+    @Test
+    fun itShouldDecodeTheUser() {
+        val base64Data = user.encoded()
+
+        val decoded = User.decode(base64Data)
+
+        assertThat(decoded.email).isEqualTo(user.email)
+        assertThat(decoded.name).isEqualTo(user.name)
+        assertThat(decoded.roles).isEqualTo(user.roles)
+        assertThat(decoded.authProvider).isEqualTo(user.authProvider)
+        assertThat(decoded.isVerified).isEqualTo(user.isVerified)
     }
 
 }

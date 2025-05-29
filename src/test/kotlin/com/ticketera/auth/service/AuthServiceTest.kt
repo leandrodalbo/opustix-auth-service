@@ -163,11 +163,11 @@ class AuthServiceTest {
     @Test
     fun itVerifyUserRefreshTokeIsNull() {
         every { userRepository.findByEmail(any()) } returns user
-        every { tokenManager.getUserEmailFromTokenString(any()) } returns user.email
+        every { tokenManager.getEncodedUserEmail(any()) } returns user.email
 
         assertThat(authService.canRefresh(user.email)).isFalse()
 
-        verify { tokenManager.getUserEmailFromTokenString(any()) }
+        verify { tokenManager.getEncodedUserEmail(any()) }
         verify { userRepository.findByEmail(any()) }
 
     }
