@@ -2,10 +2,6 @@ spring:
   application:
     name: ticketera-auth
 
-  datasource:
-    username: user
-    password: password
-    url: jdbc:postgresql://localhost:5432/authticketera
   flyway:
     enabled: false
   sql:

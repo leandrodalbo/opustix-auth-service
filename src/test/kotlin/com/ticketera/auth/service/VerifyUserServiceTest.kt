@@ -7,16 +7,12 @@ import io.mockk.every
 
 import io.mockk.mockk
 import io.mockk.verify
-import io.mockk.just
-import io.mockk.awaits
-
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.services.ses.model.SendEmailResponse
 
 
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 
 class VerifyUserServiceTest {
@@ -51,5 +47,4 @@ class VerifyUserServiceTest {
         verify { verifyUserRepository.save(any()) }
         verify { emailService.send(any(), any(), any(), any()) }
     }
-
 }
