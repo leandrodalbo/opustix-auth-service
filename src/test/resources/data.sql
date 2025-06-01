@@ -8,3 +8,11 @@ VALUES (
     true,
     '8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3'
 );
+
+
+INSERT INTO verify_user (token, email, expiry)
+VALUES (
+    'e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd',
+    'user@example.com',
+    1719076811
+);
