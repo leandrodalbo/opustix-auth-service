@@ -23,7 +23,7 @@ spring:
   datasource:
     username: user
     password: password
-    url:  jdbc:postgresql://localhost:5432/authticketera
+    url: jdbc:postgresql://localhost:5432/authticketera
   flyway:
     url: jdbc:postgresql://localhost:5432/authticketera
     user: user
@@ -32,3 +32,35 @@ spring:
 jwtprops:
   secret:
   expiration: 3600000
+aws:
+  region: eu-east-1
+  key: "FAKEAWSACCESSKEY123456"
+  secret: "FAKEAWSSECRETKEY1234567890"
+
+email:
+  enabled: true
+  link: http://localhost:8080/auth/verify
+  from: admin@opustix.com
+  subject: "Verify your email"
+  message0: |
+    Hi,
+
+    Thank you for signing up!
+
+    To activate your account, please verify your email address by clicking the link below:
+
+  message1: |
+    Hi,
+
+    Someone tried to log in to your account, but the email address has not yet been verified.
+
+    To continue, please verify your email by clicking the link below:
+
+  message2: |
+    Hi,
+
+    It looks like you signed up but haven't verified your email yet.
+
+    Your verification link may have expired, so we’ve sent you a new one:  
+
+    

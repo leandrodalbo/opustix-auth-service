@@ -26,4 +26,10 @@ class CustomErrorHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(ex.message)
     }
+
+    @ExceptionHandler(AuthException::class)
+    fun handleAuthException(ex: Exception): ResponseEntity<String> {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ex.message)
+    }
 }

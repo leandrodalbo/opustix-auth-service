@@ -90,7 +90,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
         val req = SignInRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
 
         val resp = restClient.post()
-            .uri("/auth/signin")
+            .uri("/auth/signup")
             .contentType(MediaType.APPLICATION_JSON)
             .body(req)
             .retrieve()

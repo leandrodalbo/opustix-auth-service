@@ -1,6 +1,7 @@
 spring:
   application:
     name: ticketera-auth
+
   datasource:
     username: user
     password: password
@@ -13,3 +14,18 @@ spring:
 jwtprops:
   secret: ilWsuZYs6rE8a6zo7VaTvHwMADbSniCxUwoszjdXvldRgMcKJmgo02mR4PwM03xSr7Ou3e9gfvnw9EkelBik7w==
   expiration: 3600000
+aws:
+  region: eu-east-1
+  key: "FAKEAWSACCESSKEY123456"
+  secret: "FAKEAWSSECRETKEY1234567890"
+
+email:
+  enabled: false
+  link: http://localhost:8080/auth/verify
+  from: noadmin@opustix.com
+  subject:  no subject
+  message0: no message
+  message1: no message
+  message2: no message
+
+    

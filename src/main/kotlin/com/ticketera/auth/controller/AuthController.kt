@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/auth")
 class AuthController(private val authService: AuthService) {
 
-    @PostMapping("/signin")
+    @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     fun signIn(@Valid @RequestBody request: SignInRequest) =
         authService.signIn(request)
@@ -29,5 +29,4 @@ class AuthController(private val authService: AuthService) {
 
     @PostMapping("/logout")
     fun logout(@RequestBody request: RefreshTokenRequest) = authService.logout(request)
-
 }
