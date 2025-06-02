@@ -1,6 +1,5 @@
 package com.ticketera.auth.service
 
-
 import com.ticketera.auth.errors.AuthException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.ses.SesClient

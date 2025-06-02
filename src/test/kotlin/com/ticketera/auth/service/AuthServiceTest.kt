@@ -41,7 +41,7 @@ class AuthServiceTest {
         every { userRepository.existsByEmail(any()) } returns true
 
         assertThatExceptionOfType(IllegalArgumentException::class.java)
-            .isThrownBy { authService.signIn(signInRequest) }
+            .isThrownBy { authService.signUp(signInRequest) }
             .withMessage("Email already in use")
 
         verify { userRepository.existsByEmail(any()) }
@@ -53,7 +53,7 @@ class AuthServiceTest {
         every { passwordEncoder.encode(any()) } returns "encodedPassword"
         every { userRepository.save(any<User>()) } returns user
 
-        authService.signIn(signInRequest)
+        authService.signUp(signInRequest)
 
         verify { userRepository.existsByEmail(any()) }
         verify { userRepository.save(any()) }

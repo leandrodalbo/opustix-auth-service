@@ -56,7 +56,7 @@ class AuthService(
         return LoginResponse(tokenManager.generateToken(user), refreshToken)
     }
 
-    fun signIn(signInRequest: SignInRequest) {
+    fun signUp(signInRequest: SignInRequest) {
 
         if (userRepository.existsByEmail(signInRequest.email)) {
             throw IllegalArgumentException(Message.EMAIL_IN_USE.text)

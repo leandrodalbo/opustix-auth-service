@@ -19,7 +19,7 @@ class AuthController(private val authService: AuthService) {
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     fun signIn(@Valid @RequestBody request: SignInRequest) =
-        authService.signIn(request)
+        authService.signUp(request)
 
     @PostMapping("/login")
     fun logIn(@RequestBody request: LoginRequest) = authService.login(request)

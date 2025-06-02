@@ -1,7 +1,8 @@
 package com.ticketera.auth.service
 
+import com.ticketera.auth.model.VerifyEmailMessageKey
 import com.ticketera.auth.model.VerifyUser
-import com.ticketera.auth.props.EmailMessage
+import com.ticketera.auth.props.VerifyEmailMessage
 import com.ticketera.auth.repository.VerifyUserRepository
 import io.mockk.every
 
@@ -10,28 +11,27 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.services.ses.model.SendEmailResponse
 
-
 import java.time.Instant
 import java.util.UUID
-
 
 class VerifyUserServiceTest {
     private val emailService: EmailService = mockk()
     private val verifyUserRepository: VerifyUserRepository = mockk()
 
-    private val emailMessage = EmailMessage(
+    private val emailMessage = VerifyEmailMessage(
         true,
         "http://localhost:3445/verify",
         "someone@opustix.com",
-        "verification email",
-        "message0",
-        "message1", "message2"
+        "s0", "m0", "s1", "m1",
+        "s2", "m2", "s3", "m3",
+        "statement"
     )
 
     private val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
 
     @Test
     fun shouldSendAnEmailToVerifyTheUser() {
+        every { verifyUserRepository.findByEmail(any()) } returns null
         every { verifyUserRepository.save(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "useremail@mail.com",
@@ -42,9 +42,55 @@ class VerifyUserServiceTest {
             SendEmailResponse.builder().build()
         )
 
-        service.sendVerificationEmail("email0@to.com")
+        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
 
+        verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.save(any()) }
+        verify { emailService.send(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun shouldSendAnEmailAndUpdateTheToken() {
+        every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "email@to.com",
+            Instant.now().toEpochMilli()
+        )
+
+        every { verifyUserRepository.save(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "useremail@mail.com",
+            Instant.now().toEpochMilli()
+        )
+
+        every { emailService.send(any(), any(), any(), any()) } returns Result.success(
+            SendEmailResponse.builder().build()
+        )
+
+        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
+
+        verify { verifyUserRepository.findByEmail(any()) }
+        verify { verifyUserRepository.save(any()) }
+        verify { emailService.send(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun shouldNotifyASuccessfulVerifications() {
+        every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "email@to.com",
+            Instant.now().toEpochMilli()
+        )
+
+        every { verifyUserRepository.delete(any()) } returns Unit
+        every { emailService.send(any(), any(), any(), any()) } returns Result.success(
+            SendEmailResponse.builder().build()
+        )
+
+        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+
+        verify { verifyUserRepository.findByEmail(any()) }
+        verify { verifyUserRepository.delete(any()) }
         verify { emailService.send(any(), any(), any(), any()) }
     }
 }

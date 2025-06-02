@@ -18,11 +18,17 @@ class VerifyUserRepositoryTest : AbstractContainerTest() {
     private val repository: VerifyUserRepository? = null
 
     @Test
-    fun shouldCheckUserByEmail() {
+    fun shouldFindById() {
         val verifyUser = repository?.findById(UUID.fromString("e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd"))
 
         assertThat(verifyUser?.get()?.email).isEqualTo("user@example.com")
         assertThat(verifyUser?.get()?.isExpired()).isTrue()
     }
 
+    @Test
+    fun shouldFindByEmail() {
+        val verifyUser = repository?.findByEmail("user@example.com")
+
+        assertThat(verifyUser?.email).isEqualTo("user@example.com")
+    }
 }

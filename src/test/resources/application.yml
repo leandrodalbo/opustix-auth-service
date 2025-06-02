@@ -19,9 +19,18 @@ email:
   enabled: false
   link: http://localhost:8080/auth/verify
   from: noadmin@opustix.com
-  subject:  no subject
-  message0: no message
-  message1: no message
-  message2: no message
+  subject0: "Verify your email"
+  message0: |
+    hi... complete the message here!
+  subject1: "Invalid Login"
+  message1: |
+    hi... complete the message here!
+  subject2: "Invalid Sign-Up"
+  message2: |
+    hi... complete the message here!
+  subject3: "Successfully Validated"
+  message3: |
+    hi... complete the message here!
+  closing: complete email hea
 
     

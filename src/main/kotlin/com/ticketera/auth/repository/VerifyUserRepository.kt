@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface VerifyUserRepository : JpaRepository<VerifyUser, UUID>
+interface VerifyUserRepository : JpaRepository<VerifyUser, UUID> {
+    fun findByEmail(email: String): VerifyUser?
+}
