@@ -1,0 +1,1 @@
+CREATE INDEX idx_users_refresh_token ON users (refresh_token);

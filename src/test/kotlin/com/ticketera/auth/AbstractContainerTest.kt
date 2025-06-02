@@ -14,7 +14,9 @@ abstract class AbstractContainerTest {
             withDatabaseName("testdb")
             withUsername("test")
             withPassword("test")
+            withReuse(true)
         }
+
 
         @JvmStatic
         @DynamicPropertySource
@@ -24,5 +26,4 @@ abstract class AbstractContainerTest {
             registry.add("spring.datasource.password", postgresContainer::getPassword)
         }
     }
-
 }

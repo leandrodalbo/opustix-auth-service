@@ -1,10 +1,7 @@
 spring:
   application:
     name: ticketera-auth
-  datasource:
-    username: user
-    password: password
-    url: jdbc:postgresql://localhost:5432/authticketera
+
   flyway:
     enabled: false
   sql:
@@ -13,3 +10,27 @@ spring:
 jwtprops:
   secret: ilWsuZYs6rE8a6zo7VaTvHwMADbSniCxUwoszjdXvldRgMcKJmgo02mR4PwM03xSr7Ou3e9gfvnw9EkelBik7w==
   expiration: 3600000
+aws:
+  region: eu-east-1
+  key: "FAKEAWSACCESSKEY123456"
+  secret: "FAKEAWSSECRETKEY1234567890"
+
+email:
+  enabled: false
+  link: http://localhost:8080/auth/verify
+  from: noadmin@opustix.com
+  subject0: "Verify your email"
+  message0: |
+    hi... complete the message here!
+  subject1: "Invalid Login"
+  message1: |
+    hi... complete the message here!
+  subject2: "Invalid Sign-Up"
+  message2: |
+    hi... complete the message here!
+  subject3: "Successfully Validated"
+  message3: |
+    hi... complete the message here!
+  closing: complete the message here!
+
+    

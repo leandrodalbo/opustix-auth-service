@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.util.UUID
 
-data class SignInRequest(
+data class SignUpRequest(
     @field:Email(message = "Invalid email format")
     @field:NotBlank(message = "Email is required")
     val email: String,

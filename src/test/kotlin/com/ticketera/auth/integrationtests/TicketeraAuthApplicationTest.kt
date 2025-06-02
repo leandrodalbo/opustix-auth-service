@@ -3,7 +3,7 @@ package com.ticketera.auth.integrationtests
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.RefreshTokenRequest
-import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
@@ -47,14 +47,14 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
             .baseUrl("http://localhost:$port")
             .build()
     }
-    
+
     @Test
     fun `should login an existing user`() {
         assertThat(loginUser()?.accessToken).isNotEmpty()
     }
 
     @Test
-    fun `should refresh the token`() {
+    fun `should refresh the user token`() {
         val login = loginUser()
         val req = RefreshTokenRequest(login?.refreshToken!!)
 
@@ -86,11 +86,11 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
     }
 
     @Test
-    fun itShouldRegisterAnewUser() {
-        val req = SignInRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
+    fun itShouldSignUpAUser() {
+        val req = SignUpRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
 
         val resp = restClient.post()
-            .uri("/auth/signin")
+            .uri("/auth/signup")
             .contentType(MediaType.APPLICATION_JSON)
             .body(req)
             .retrieve()
@@ -112,6 +112,17 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
                 .toEntity(String::class.java)
         }.withMessageContaining(Message.EMAIL_NOT_FOUND.text)
 
+    }
+
+    @Test
+    fun itShouldVerifyAnewUser() {
+        val resp = restClient.get()
+            .uri("/auth/verify?token=e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
     }
 
     private fun loginUser(): LoginResponse? = restClient.post()

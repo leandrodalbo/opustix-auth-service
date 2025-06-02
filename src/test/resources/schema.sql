@@ -1,7 +1,6 @@
 -- Enable UUID and enum support
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -11,4 +10,14 @@ CREATE TABLE users (
     auth_provider VARCHAR(100) NOT NULL,
     is_verified BOOLEAN NOT NULL,
     refresh_token UUID
+);
+
+CREATE TABLE verify_user (
+    token UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    expiry BIGINT NOT NULL,
+    CONSTRAINT fk_user_verification
+        FOREIGN KEY (email)
+        REFERENCES users(email)
+        ON DELETE CASCADE
 );

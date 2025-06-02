@@ -17,13 +17,19 @@ class CustomErrorHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleInvalidArgument(ex: Exception): ResponseEntity<String> {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ex.message)
     }
 
     @ExceptionHandler(InvalidUserException::class)
     fun handleInvalidUser(ex: Exception): ResponseEntity<String> {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ex.message)
+    }
+
+    @ExceptionHandler(AuthException::class)
+    fun handleAuthException(ex: Exception): ResponseEntity<String> {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ex.message)
     }
 }
