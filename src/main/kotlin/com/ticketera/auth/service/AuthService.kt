@@ -8,7 +8,11 @@ import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.*
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.Role
+import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.VerifyEmailMessageKey
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -34,7 +38,6 @@ class AuthService(
     fun refresh(request: RefreshTokenRequest): LoginResponse {
         val user = userRepository.findByRefreshToken(request.refreshToken)
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
-
         val refreshToken = UUID.randomUUID()
 
         userRepository.save(user.copy(refreshToken = refreshToken))
@@ -111,7 +114,6 @@ class AuthService(
         userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
 
     private fun validateLogin(user: User, req: LoginRequest) {
-
         if (!passwordEncoder.matches(
                 req.pass,
                 user.password

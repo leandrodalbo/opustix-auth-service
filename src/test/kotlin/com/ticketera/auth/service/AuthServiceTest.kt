@@ -7,7 +7,11 @@ import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.*
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.Role
+import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.VerifyUser
 import com.ticketera.auth.repository.UserRepository
 import io.mockk.mockk
 import io.mockk.verify
@@ -36,7 +40,7 @@ class AuthServiceTest {
     )
 
     @Test
-    fun shouldNotRegisterTheUserIfTheEmailIsAlreadyInUse() {
+    fun registrationFailIfEmailIsAlreadyInUse() {
         every { userRepository.findByEmail(any()) } returns user
 
         assertThatExceptionOfType(IllegalArgumentException::class.java)
@@ -63,7 +67,7 @@ class AuthServiceTest {
 
 
     @Test
-    fun shouldNotLoginThePasswordIsNotMatching() {
+    fun wontLoginWhenThePasswordIsNotMatching() {
         every { userRepository.findByEmail(any()) } returns user.copy(password = "invalidpass")
         every { passwordEncoder.matches(any(), any()) } returns false
 
@@ -139,7 +143,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun itShouldSaveAnewUserAndSendAVerificationEmail() {
+    fun aNewUserIsSavedVerificationEmailIsSent() {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
@@ -152,7 +156,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun itShouldRefreshAnExistingUser() {
+    fun newRefreshTokenForAnExistingUser() {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
 
@@ -163,7 +167,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun itShouldNotUpdateANotVerifiedUser() {
+    fun refreshTokenIsNotSavedForNotVerifiedUsers() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
@@ -177,7 +181,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun itVerifyUserRefreshTokeIsNull() {
+    fun checkingTheUserIsLoggedIn() {
         every { userRepository.findByEmail(any()) } returns user
         every { tokenManager.getEncodedUserEmail(any()) } returns user.email
 
@@ -188,7 +192,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun shouldThrowNotVerifiedUserOnLogin() {
+    fun loginFailForNotVerifiedUsers() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
         every { passwordEncoder.matches(any(), any()) } returns true
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
@@ -203,7 +207,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun shouldThrowNotVerifiedUserOnSignUp() {
+    fun signUpFailedForExistingUserThatIsNotVerified() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
@@ -235,14 +239,13 @@ class AuthServiceTest {
     }
 
     @Test
-    fun shouldNotVerifyIfUserNotFound() {
+    fun shouldNotVerifyAUserNotFound() {
         every { verifyUserService.findFromToken(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "someuser@mail.com",
             Instant.now().toEpochMilli()
         )
         every { userRepository.findByEmail(any()) } returns null
-
 
         assertThatExceptionOfType(AuthException::class.java)
             .isThrownBy { authService.verifyUser(user.id.toString()) }

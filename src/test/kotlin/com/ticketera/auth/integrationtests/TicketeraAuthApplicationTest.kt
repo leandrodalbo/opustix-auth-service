@@ -54,7 +54,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
     }
 
     @Test
-    fun `should refresh the token`() {
+    fun `should refresh the user token`() {
         val login = loginUser()
         val req = RefreshTokenRequest(login?.refreshToken!!)
 
@@ -86,7 +86,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
     }
 
     @Test
-    fun itShouldRegisterAnewUser() {
+    fun itShouldSignUpAUser() {
         val req = SignUpRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
 
         val resp = restClient.post()

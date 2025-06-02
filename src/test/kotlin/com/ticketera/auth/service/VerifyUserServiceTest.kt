@@ -78,7 +78,7 @@ class VerifyUserServiceTest {
     }
 
     @Test
-    fun shouldNotifyASuccessfulVerifications() {
+    fun shouldNotifyASuccessfulVerification() {
         val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
 
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
@@ -117,7 +117,7 @@ class VerifyUserServiceTest {
     }
 
     @Test
-    fun shouldNotSendAnEmailAfterUpdate() {
+    fun shouldNotSendAnEmailAfterSavingWhenNotEnabled() {
         val service =
             VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
 
@@ -136,7 +136,6 @@ class VerifyUserServiceTest {
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.save(any()) }
-
     }
 
     @Test
@@ -159,7 +158,7 @@ class VerifyUserServiceTest {
     }
 
     @Test
-    fun shouldThrowExceptionWhenFindIsEmpty() {
+    fun shouldThrowExceptionWhenNotFoundUsingToken() {
         val service =
             VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
         val token = UUID.randomUUID()

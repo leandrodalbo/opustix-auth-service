@@ -21,7 +21,7 @@ class EmailServiceTest {
     private val emailService = EmailService(sesClient)
 
     @Test
-    fun shouldSendAnEmailToVerifyTheUser() {
+    fun shouldSendAVerificationEmail() {
         every { sesClient.sendEmail(ofType(SendEmailRequest::class)) } returns SendEmailResponse.builder().build()
 
         emailService.send("email0@from.com", "email0@to.com", "very your email", "please click on the link...")
