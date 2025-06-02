@@ -3,7 +3,7 @@ package com.ticketera.auth.integrationtests
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.RefreshTokenRequest
-import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
@@ -87,7 +87,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
     @Test
     fun itShouldRegisterAnewUser() {
-        val req = SignInRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
+        val req = SignUpRequest("user@example2.com", "Joe Doe", "0lea@tickets0")
 
         val resp = restClient.post()
             .uri("/auth/signup")

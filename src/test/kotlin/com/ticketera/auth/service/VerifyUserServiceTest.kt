@@ -27,17 +27,25 @@ class VerifyUserServiceTest {
         "statement"
     )
 
-    private val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+    private val emailMessageDisabled = VerifyEmailMessage(
+        false,
+        "http://localhost:3445/verify",
+        "someone@opustix.com",
+        "s0", "m0", "s1", "m1",
+        "s2", "m2", "s3", "m3",
+        "statement"
+    )
 
     @Test
     fun shouldSendAnEmailToVerifyTheUser() {
+        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+
         every { verifyUserRepository.findByEmail(any()) } returns null
         every { verifyUserRepository.save(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "useremail@mail.com",
             Instant.now().toEpochMilli()
         )
-
         every { emailService.send(any(), any(), any(), any()) } returns Result.success(
             SendEmailResponse.builder().build()
         )
@@ -51,22 +59,21 @@ class VerifyUserServiceTest {
 
     @Test
     fun shouldSendAnEmailAndUpdateTheToken() {
+        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "email@to.com",
             Instant.now().toEpochMilli()
         )
-
         every { verifyUserRepository.save(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "useremail@mail.com",
             Instant.now().toEpochMilli()
         )
-
         every { emailService.send(any(), any(), any(), any()) } returns Result.success(
             SendEmailResponse.builder().build()
         )
-
         service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
 
         verify { verifyUserRepository.findByEmail(any()) }
@@ -76,12 +83,13 @@ class VerifyUserServiceTest {
 
     @Test
     fun shouldNotifyASuccessfulVerifications() {
+        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "email@to.com",
             Instant.now().toEpochMilli()
         )
-
         every { verifyUserRepository.delete(any()) } returns Unit
         every { emailService.send(any(), any(), any(), any()) } returns Result.success(
             SendEmailResponse.builder().build()
@@ -92,5 +100,44 @@ class VerifyUserServiceTest {
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.delete(any()) }
         verify { emailService.send(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun shouldNotSendEmailsIfNotEnabledAfterVerified() {
+        val service = VerifyUserService(verifyUserRepository, emailService, emailMessageDisabled)
+        every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "email@to.com",
+            Instant.now().toEpochMilli()
+        )
+
+        every { verifyUserRepository.delete(any()) } returns Unit
+
+        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+
+        verify { verifyUserRepository.findByEmail(any()) }
+        verify { verifyUserRepository.delete(any()) }
+    }
+
+    @Test
+    fun shouldNotSendAnEmailAfterUpdate() {
+        val service = VerifyUserService(verifyUserRepository, emailService, emailMessageDisabled)
+
+        every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "email@to.com",
+            Instant.now().toEpochMilli()
+        )
+        every { verifyUserRepository.save(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "useremail@mail.com",
+            Instant.now().toEpochMilli()
+        )
+
+        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
+
+        verify { verifyUserRepository.findByEmail(any()) }
+        verify { verifyUserRepository.save(any()) }
+
     }
 }

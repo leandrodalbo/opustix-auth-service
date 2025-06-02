@@ -3,14 +3,12 @@ package com.ticketera.auth.service
 import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.errors.Message
-import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
+import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.OAuthData
-import com.ticketera.auth.model.Role
-import com.ticketera.auth.model.User
+import com.ticketera.auth.model.*
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -20,7 +18,8 @@ import java.util.UUID
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val verifyUserService: VerifyUserService
 ) {
 
     fun logout(request: RefreshTokenRequest) {
@@ -42,26 +41,17 @@ class AuthService(
 
     fun login(request: LoginRequest): LoginResponse {
         val user = userRepository.findByEmail(request.email) ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
-
-        if (!passwordEncoder.matches(
-                request.pass,
-                user.password
-            )
-        ) throw InvalidUserException(Message.INVALID_PASSWORD.text)
-
         val refreshToken = UUID.randomUUID()
+
+        validateLogin(user, request)
 
         userRepository.save(user.copy(refreshToken = refreshToken))
 
         return LoginResponse(tokenManager.generateToken(user), refreshToken)
     }
 
-    fun signUp(signInRequest: SignInRequest) {
-
-        if (userRepository.existsByEmail(signInRequest.email)) {
-            throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
-        }
-
+    fun signUp(signInRequest: SignUpRequest) {
+        validateSignUp(signInRequest)
         val user = User(
             null,
             signInRequest.email,
@@ -71,9 +61,7 @@ class AuthService(
             AuthProvider.LOCAL,
             false
         )
-
         userRepository.save(user)
-
     }
 
     fun findOrCreateUser(authData: OAuthData): User {
@@ -94,4 +82,29 @@ class AuthService(
 
     fun canRefresh(userData: String) =
         userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
+
+
+    private fun validateLogin(user: User, req: LoginRequest) {
+
+        if (!passwordEncoder.matches(
+                req.pass,
+                user.password
+            )
+        ) throw InvalidUserException(Message.INVALID_PASSWORD.text)
+
+        if (!user.isVerified) {
+            verifyUserService.sendVerificationEmail(req.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
+            throw AuthException(Message.USER_NOT_VERIFIED.text)
+        }
+    }
+
+    private fun validateSignUp(req: SignUpRequest) {
+        userRepository.findByEmail(req.email)?.let {
+            if (it.isVerified) throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
+            else {
+                verifyUserService.sendVerificationEmail(req.email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
+                throw AuthException(Message.USER_NOT_VERIFIED.text)
+            }
+        }
+    }
 }

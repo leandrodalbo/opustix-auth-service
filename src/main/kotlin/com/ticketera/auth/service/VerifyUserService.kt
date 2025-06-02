@@ -24,7 +24,7 @@ class VerifyUserService(
             verifyUserRepository.delete(
                 verifyUserRepository.findByEmail(email) ?: throw AuthException(Message.VERIFY_SERVICE_FAILED.text)
             )
-            notifyUser(emailMessageKey, email, null)
+            if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
         } else {
             val verifyUser =
                 verifyUserRepository.findByEmail(email)
@@ -35,7 +35,7 @@ class VerifyUserService(
                 )
 
             val saved = verifyUserRepository.save(verifyUser)
-            notifyUser(emailMessageKey, saved.email, saved.token)
+            if (emailMessage.enabled) notifyUser(emailMessageKey, saved.email, saved.token)
         }
     }
 

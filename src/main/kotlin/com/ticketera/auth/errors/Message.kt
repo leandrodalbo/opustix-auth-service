@@ -7,7 +7,8 @@ enum class Message(val text: String) {
     REQUEST_FAILED("Request Failed"),
     INVALID_TOKEN("Invalid Token"),
     EMAIL_SERVICE_FAILED("Email Service Failed"),
-    VERIFY_SERVICE_FAILED("Verify Service Failed");
+    VERIFY_SERVICE_FAILED("Verify Service Failed"),
+    USER_NOT_VERIFIED("User Not Verified");
 
     override fun toString(): String = text
 }

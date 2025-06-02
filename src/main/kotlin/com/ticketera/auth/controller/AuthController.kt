@@ -2,7 +2,7 @@ package com.ticketera.auth.controller
 
 import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.RefreshTokenRequest
-import com.ticketera.auth.dto.request.SignInRequest
+import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -18,7 +18,7 @@ class AuthController(private val authService: AuthService) {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    fun signIn(@Valid @RequestBody request: SignInRequest) =
+    fun signIn(@Valid @RequestBody request: SignUpRequest) =
         authService.signUp(request)
 
     @PostMapping("/login")
