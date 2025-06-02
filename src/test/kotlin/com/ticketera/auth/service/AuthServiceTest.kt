@@ -140,18 +140,20 @@ class AuthServiceTest {
     }
 
     @Test
-    fun itShouldSaveAnewUser() {
+    fun itShouldSaveAnewUserAndSendAVerificationEmail() {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
+        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
         authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
+        verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
-    fun itShouldUpdateAnExistingUser() {
+    fun itShouldRefreshAnExistingUser() {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
 
@@ -159,6 +161,20 @@ class AuthServiceTest {
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
+    }
+
+    @Test
+    fun itShouldNotUpdateANotVerifiedUser() {
+        every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
+        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+
+        assertThatExceptionOfType(AuthException::class.java)
+            .isThrownBy { authService.findOrCreateUser(OAuthData(user.email, user.name)) }
+            .withMessage(Message.USER_NOT_VERIFIED.text)
+
+
+        verify { userRepository.findByEmail(any()) }
+        verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
     @Test

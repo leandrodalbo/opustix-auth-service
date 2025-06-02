@@ -65,19 +65,27 @@ class AuthService(
     }
 
     fun findOrCreateUser(authData: OAuthData): User {
-        return userRepository.findByEmail(authData.email).let {
-            userRepository.save(
-                it?.copy(refreshToken = UUID.randomUUID()) ?: User(
-                    email = authData.email,
-                    name = authData.name,
-                    password = "",
-                    roles = Role.USER.name,
-                    authProvider = AuthProvider.GOOGLE,
-                    isVerified = false,
-                    refreshToken = UUID.randomUUID()
+        return userRepository.findByEmail(authData.email)?.let {
+            if (!it.isVerified) {
+                verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
+                throw AuthException(Message.USER_NOT_VERIFIED.text)
+            } else {
+                userRepository.save(
+                    it.copy(refreshToken = UUID.randomUUID())
                 )
+            }
+        } ?: userRepository.save(
+            User(
+                email = authData.email,
+                name = authData.name,
+                password = "",
+                roles = Role.USER.name,
+                authProvider = AuthProvider.GOOGLE,
+                isVerified = false,
+                refreshToken = UUID.randomUUID()
             )
-        }
+        ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
+
     }
 
     fun canRefresh(userData: String) =
