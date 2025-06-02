@@ -61,7 +61,10 @@ class AuthService(
             AuthProvider.LOCAL,
             false
         )
-        userRepository.save(user)
+
+        userRepository.save(user).also {
+            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        }
     }
 
     fun findOrCreateUser(authData: OAuthData): User {
@@ -85,7 +88,6 @@ class AuthService(
                 refreshToken = UUID.randomUUID()
             )
         ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
-
     }
 
     fun canRefresh(userData: String) =

@@ -1,6 +1,5 @@
 package com.ticketera.auth.service
 
-
 import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
@@ -54,12 +53,14 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns null
         every { passwordEncoder.encode(any()) } returns "encodedPassword"
         every { userRepository.save(any<User>()) } returns user
+        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
         authService.signUp(signInRequest)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
         verify { passwordEncoder.encode(any()) }
+        verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
 
