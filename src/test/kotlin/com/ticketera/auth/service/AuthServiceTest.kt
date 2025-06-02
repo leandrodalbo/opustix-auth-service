@@ -7,10 +7,7 @@ import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.OAuthData
-import com.ticketera.auth.model.Role
-import com.ticketera.auth.model.User
+import com.ticketera.auth.model.*
 import com.ticketera.auth.repository.UserRepository
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,6 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.password.PasswordEncoder
+import java.time.Instant
 import java.util.UUID
 
 class AuthServiceTest {
@@ -215,5 +213,41 @@ class AuthServiceTest {
 
         verify { userRepository.findByEmail(any()) }
         verify { verifyUserService.sendVerificationEmail(any(), any()) }
+    }
+
+    @Test
+    fun shouldVerifyAnewUser() {
+        every { verifyUserService.findFromToken(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "someuser@mail.com",
+            Instant.now().toEpochMilli()
+        )
+        every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
+        every { userRepository.save(any()) } returns user.copy(isVerified = true)
+        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+
+        authService.verifyUser(user.id.toString())
+
+        verify { userRepository.save(any()) }
+        verify { userRepository.findByEmail(any()) }
+        verify { verifyUserService.findFromToken(any()) }
+        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+    }
+
+    @Test
+    fun shouldNotVerifyIfUserNotFound() {
+        every { verifyUserService.findFromToken(any()) } returns VerifyUser(
+            UUID.randomUUID(),
+            "someuser@mail.com",
+            Instant.now().toEpochMilli()
+        )
+        every { userRepository.findByEmail(any()) } returns null
+
+
+        assertThatExceptionOfType(AuthException::class.java)
+            .isThrownBy { authService.verifyUser(user.id.toString()) }
+
+        verify { userRepository.findByEmail(any()) }
+        verify { verifyUserService.findFromToken(any()) }
     }
 }

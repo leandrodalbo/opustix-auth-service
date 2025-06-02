@@ -47,7 +47,7 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
             .baseUrl("http://localhost:$port")
             .build()
     }
-    
+
     @Test
     fun `should login an existing user`() {
         assertThat(loginUser()?.accessToken).isNotEmpty()
@@ -112,6 +112,17 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
                 .toEntity(String::class.java)
         }.withMessageContaining(Message.EMAIL_NOT_FOUND.text)
 
+    }
+
+    @Test
+    fun itShouldVerifyAnewUser() {
+        val resp = restClient.get()
+            .uri("/auth/verify?token=e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
     }
 
     private fun loginUser(): LoginResponse? = restClient.post()

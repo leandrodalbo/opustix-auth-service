@@ -12,6 +12,7 @@ import com.ticketera.auth.model.*
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
@@ -22,12 +23,14 @@ class AuthService(
     private val verifyUserService: VerifyUserService
 ) {
 
+    @Transactional
     fun logout(request: RefreshTokenRequest) {
         val user = userRepository.findByRefreshToken(request.refreshToken)
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
         userRepository.save(user.copy(refreshToken = null))
     }
 
+    @Transactional
     fun refresh(request: RefreshTokenRequest): LoginResponse {
         val user = userRepository.findByRefreshToken(request.refreshToken)
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
@@ -39,6 +42,7 @@ class AuthService(
         return LoginResponse(tokenManager.generateToken(user), refreshToken)
     }
 
+    @Transactional
     fun login(request: LoginRequest): LoginResponse {
         val user = userRepository.findByEmail(request.email) ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
         val refreshToken = UUID.randomUUID()
@@ -50,6 +54,7 @@ class AuthService(
         return LoginResponse(tokenManager.generateToken(user), refreshToken)
     }
 
+    @Transactional
     fun signUp(signInRequest: SignUpRequest) {
         validateSignUp(signInRequest)
         val user = User(
@@ -67,6 +72,7 @@ class AuthService(
         }
     }
 
+    @Transactional
     fun findOrCreateUser(authData: OAuthData): User {
         return userRepository.findByEmail(authData.email)?.let {
             if (!it.isVerified) {
@@ -90,9 +96,19 @@ class AuthService(
         ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
     }
 
+    @Transactional
+    fun verifyUser(token: String) {
+        val toVerify = verifyUserService.findFromToken(token)
+        userRepository.findByEmail(toVerify.email)
+            ?.let {
+                userRepository.save(it.copy(isVerified = true))
+            } ?: throw AuthException(Message.REQUEST_FAILED.text)
+
+        verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+    }
+
     fun canRefresh(userData: String) =
         userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
-
 
     private fun validateLogin(user: User, req: LoginRequest) {
 

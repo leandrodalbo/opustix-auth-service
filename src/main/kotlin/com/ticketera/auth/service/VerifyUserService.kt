@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 class VerifyUserService(
     private val verifyUserRepository: VerifyUserRepository,
     private val sendEmailService: EmailService,
     private val emailMessage: VerifyEmailMessage
+
 ) {
 
     fun sendVerificationEmail(email: String, emailMessageKey: VerifyEmailMessageKey) {
@@ -23,21 +25,25 @@ class VerifyUserService(
         if (VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED.equals(emailMessageKey)) {
             verifyUserRepository.delete(
                 verifyUserRepository.findByEmail(email) ?: throw AuthException(Message.VERIFY_SERVICE_FAILED.text)
-            )
-            if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
+            ).also {
+                if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
+            }
+
         } else {
-            val verifyUser =
-                verifyUserRepository.findByEmail(email)
-                    .let { it?.copy(expiry = Instant.now().plus(24, ChronoUnit.HOURS).toEpochMilli()) } ?: VerifyUser(
+            val toBeSaved = verifyUserRepository.findByEmail(email)
+                .let { it?.copy(expiry = Instant.now().plus(24, ChronoUnit.HOURS).toEpochMilli()) }
+                ?: VerifyUser(
                     null,
                     email,
                     Instant.now().plus(24, ChronoUnit.HOURS).toEpochMilli()
                 )
-
-            val saved = verifyUserRepository.save(verifyUser)
+            val saved = verifyUserRepository.save(toBeSaved)
             if (emailMessage.enabled) notifyUser(emailMessageKey, saved.email, saved.token)
         }
     }
+
+    fun findFromToken(token: String): VerifyUser = verifyUserRepository.findById(UUID.fromString(token))
+        .getOrElse { throw AuthException(Message.VERIFY_SERVICE_FAILED.text) }
 
     private fun notifyUser(key: VerifyEmailMessageKey, emailTo: String, token: UUID?) {
         subjectAndMessage(key).let {
