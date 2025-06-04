@@ -25,5 +25,3 @@ data class SignUpRequest(
 )
 
 data class LoginRequest(val email: String, val pass: String)
-
-data class RefreshTokenRequest(val refreshToken: UUID)

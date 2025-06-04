@@ -1,18 +1,19 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
-import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.User
-import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.AuthPair
+import com.ticketera.auth.model.Role
 import com.ticketera.auth.model.VerifyEmailMessageKey
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.RefreshTokenCookie
+import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -28,25 +29,29 @@ class AuthService(
 ) {
 
     @Transactional
-    fun logout(request: RefreshTokenRequest) {
-        val user = userRepository.findByRefreshToken(request.refreshToken)
+    fun logout(refreshToken: String) {
+        val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
         userRepository.save(user.copy(refreshToken = null))
     }
 
     @Transactional
-    fun refresh(request: RefreshTokenRequest): LoginResponse {
-        val user = userRepository.findByRefreshToken(request.refreshToken)
+    fun refresh(refreshToken: String): AuthPair {
+        val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
-        val refreshToken = UUID.randomUUID()
 
-        userRepository.save(user.copy(refreshToken = refreshToken))
+        val newToken = UUID.randomUUID()
 
-        return LoginResponse(tokenManager.generateToken(user), refreshToken)
+        userRepository.save(user.copy(refreshToken = newToken))
+
+        return AuthPair(
+            LoginResponse(tokenManager.generateToken(user)),
+            RefreshTokenCookie(newToken).cookie()
+        )
     }
 
     @Transactional
-    fun login(request: LoginRequest): LoginResponse {
+    fun login(request: LoginRequest): AuthPair {
         val user = userRepository.findByEmail(request.email) ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
         val refreshToken = UUID.randomUUID()
 
@@ -54,7 +59,10 @@ class AuthService(
 
         userRepository.save(user.copy(refreshToken = refreshToken))
 
-        return LoginResponse(tokenManager.generateToken(user), refreshToken)
+        return AuthPair(
+            LoginResponse(tokenManager.generateToken(user)),
+            RefreshTokenCookie(refreshToken).cookie()
+        )
     }
 
     @Transactional
@@ -83,7 +91,7 @@ class AuthService(
                 throw AuthException(Message.USER_NOT_VERIFIED.text)
             } else {
                 userRepository.save(
-                    it.copy(refreshToken = UUID.randomUUID())
+                    it.copy(refreshToken = authData.refreshToken)
                 )
             }
         } ?: userRepository.save(
@@ -94,7 +102,7 @@ class AuthService(
                 roles = Role.USER.name,
                 authProvider = AuthProvider.GOOGLE,
                 isVerified = false,
-                refreshToken = UUID.randomUUID()
+                refreshToken = authData.refreshToken
             )
         ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
     }

@@ -2,7 +2,6 @@ package com.ticketera.auth.integrationtests
 
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.dto.request.LoginRequest
-import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
@@ -50,39 +49,36 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
     @Test
     fun `should login an existing user`() {
-        assertThat(loginUser()?.accessToken).isNotEmpty()
+        assertThat(loginUser().body?.accessToken).isNotEmpty()
     }
 
     @Test
     fun `should refresh the user token`() {
         val login = loginUser()
-        val req = RefreshTokenRequest(login?.refreshToken!!)
+        val cookie = login.headers.getFirst("set-cookie")
 
         val resp = restClient.post()
             .uri("/auth/refresh")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(req)
+            .header("Cookie",cookie)
             .retrieve()
             .body(LoginResponse::class.java)
-
-        assertThat(resp?.accessToken).isNotEqualTo(login.accessToken)
-
+        assertThat(resp?.accessToken).isNotEqualTo(login.body?.accessToken)
     }
 
     @Test
     fun `should logout`() {
         val login = loginUser()
-        val req = RefreshTokenRequest(login?.refreshToken!!)
+        val cookie = login.headers.getFirst("set-cookie")
 
         val resp = restClient.post()
             .uri("/auth/logout")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(req)
+            .header("Cookie",cookie)
             .retrieve()
             .toBodilessEntity()
 
         assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
-
     }
 
     @Test
@@ -125,11 +121,12 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
         assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
     }
 
-    private fun loginUser(): LoginResponse? = restClient.post()
-        .uri("/auth/login")
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(loginRequest)
-        .retrieve()
-        .body(LoginResponse::class.java)
+    private fun loginUser() =
+        restClient.post()
+            .uri("/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(loginRequest)
+            .retrieve()
+            .toEntity(LoginResponse::class.java)
 
 }
