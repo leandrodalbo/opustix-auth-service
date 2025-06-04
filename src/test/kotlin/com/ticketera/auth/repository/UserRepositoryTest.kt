@@ -2,12 +2,14 @@ package com.ticketera.auth.repository
 
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.RefreshToken
 import com.ticketera.auth.model.Role
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import java.time.Instant
 import java.util.UUID
 
 @DataJpaTest
@@ -52,10 +54,58 @@ class UserRepositoryTest : AbstractContainerTest() {
 
     @Test
     fun shouldFindAUserByRefreshToken() {
-        val user = repository?.findByRefreshToken(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
+        val user = repository?.findByEmail("user@example.com")
 
-        assertThat(user?.id).isNotNull()
-        assertThat(user?.refreshToken).isEqualTo(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
+        user?.let { found ->
+            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
+            found.refreshTokens.add(token)
+            repository?.save(found)
 
+            val updatedUser = repository?.findByRefreshToken(token.token)
+
+            assertThat(user.email).isEqualTo("user@example.com")
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token.token
+            }).isNotEmpty
+        }
+
+    }
+
+    @Test
+    fun shouldSaveTheUserRefreshToken() {
+        val user = repository?.findByEmail("user@example.com")
+
+        user?.let { found ->
+            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
+            found.refreshTokens.add(token)
+            repository?.save(found)
+
+            val updatedUser = repository?.findByEmail("user@example.com")
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token.token
+            }).isNotEmpty
+        }
+
+    }
+
+    @Test
+    fun shouldDeleteTheUserRefreshToken() {
+        val user = repository?.findByEmail("user@example.com")
+
+        user?.let { found ->
+            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
+            found.refreshTokens.add(token)
+
+            val withToken = repository?.save(found)
+            withToken?.let {
+                it.refreshTokens.remove(withToken.refreshTokens[0])
+                repository?.save(it)
+            }
+
+            val updatedUser = repository?.findByEmail("user@example.com")
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token.token
+            }).isEmpty()
+        }
     }
 }

@@ -36,7 +36,7 @@ class OAuth2Handler(
         val loginResponse = LoginResponse(tokenManager.generateToken(user))
 
         response.contentType = MediaType.APPLICATION_JSON_VALUE
-        response.addCookie(RefreshTokenCookie(user.refreshToken).cookie())
+        //response.addCookie(RefreshTokenCookie(user.refreshToken).cookie())
         response.writer.write(objectMapper.writeValueAsString(loginResponse))
     }
 

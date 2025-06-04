@@ -10,6 +10,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Column
 import jakarta.persistence.Enumerated
+import jakarta.persistence.OneToMany
+import jakarta.persistence.CascadeType
 import jakarta.persistence.EnumType
 import java.time.Instant
 import java.util.UUID
@@ -42,8 +44,8 @@ data class User(
     @Column(name = "is_verified", nullable = false)
     val isVerified: Boolean,
 
-    @Column(name = "refresh_token", nullable = true)
-    val refreshToken: UUID? = null
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val refreshTokens: MutableList<RefreshToken> = mutableListOf()
 ) {
 
     fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
@@ -87,12 +89,15 @@ data class User(
                 "",
                 userData.roles,
                 AuthProvider.valueOf(userData.authProvider),
-                userData.isVerified,
-                null
+                userData.isVerified
             )
         }
 
         private val mapper = ObjectMapper()
     }
 
+
+    override fun toString(): String {
+        return "id:${id}|email:${email}"
+    }
 }

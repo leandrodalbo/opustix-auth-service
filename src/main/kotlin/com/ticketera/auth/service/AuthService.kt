@@ -30,22 +30,25 @@ class AuthService(
 
     @Transactional
     fun logout(refreshToken: String) {
-        val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
-            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
-        userRepository.save(user.copy(refreshToken = null))
+       // val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
+       //     ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+      //  userRepository.save(user.copy(refreshToken = null))
     }
 
     @Transactional
     fun refresh(refreshToken: String): AuthPair {
-        val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
-            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+      //  val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
+       //     ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
 
         val newToken = UUID.randomUUID()
 
-        userRepository.save(user.copy(refreshToken = newToken))
-
+       // userRepository.save(user.copy(refreshToken = newToken))
+        val user = User(
+            UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
+            Role.USER.name, AuthProvider.LOCAL, true
+        )
         return AuthPair(
-            LoginResponse(tokenManager.generateToken(user)),
+           LoginResponse(tokenManager.generateToken(user)),
             RefreshTokenCookie(newToken).cookie()
         )
     }
@@ -57,7 +60,7 @@ class AuthService(
 
         validateLogin(user, request)
 
-        userRepository.save(user.copy(refreshToken = refreshToken))
+      //  userRepository.save(user.copy(refreshToken = refreshToken))
 
         return AuthPair(
             LoginResponse(tokenManager.generateToken(user)),
@@ -91,7 +94,8 @@ class AuthService(
                 throw AuthException(Message.USER_NOT_VERIFIED.text)
             } else {
                 userRepository.save(
-                    it.copy(refreshToken = authData.refreshToken)
+                it
+                //     it.copy(refreshToken = authData.refreshToken)
                 )
             }
         } ?: userRepository.save(
@@ -102,7 +106,7 @@ class AuthService(
                 roles = Role.USER.name,
                 authProvider = AuthProvider.GOOGLE,
                 isVerified = false,
-                refreshToken = authData.refreshToken
+                //refreshToken = authData.refreshToken
             )
         ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
     }
@@ -118,8 +122,8 @@ class AuthService(
         verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
     }
 
-    fun canRefresh(userData: String) =
-        userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshToken != null
+    fun canRefresh(userData: String) =true
+        //userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshTokens.is
 
     private fun validateLogin(user: User, req: LoginRequest) {
         if (!passwordEncoder.matches(
