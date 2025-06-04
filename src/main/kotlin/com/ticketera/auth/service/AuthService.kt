@@ -41,12 +41,8 @@ class AuthService(
 
         return AuthPair(
             LoginResponse(tokenManager.generateToken(user)),
-            Cookie("refreshToken", newToken.toString()).apply {
-                isHttpOnly = true
-                secure = true
-                path = "/"
-                maxAge = 7 * 24 * 60 * 60
-            })
+            RefreshTokenCookie(newToken).cookie()
+        )
     }
 
     @Transactional
@@ -60,12 +56,8 @@ class AuthService(
 
         return AuthPair(
             LoginResponse(tokenManager.generateToken(user)),
-            Cookie("refreshToken", refreshToken.toString()).apply {
-                isHttpOnly = true
-                secure = true
-                path = "/"
-                maxAge = 7 * 24 * 60 * 60
-            })
+            RefreshTokenCookie(refreshToken).cookie()
+        )
     }
 
     @Transactional
