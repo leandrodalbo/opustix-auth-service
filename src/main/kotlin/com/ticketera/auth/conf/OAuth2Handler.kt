@@ -31,12 +31,12 @@ class OAuth2Handler(
         authentication: Authentication
     ) {
         val oAuthData = this.extractAuthData(authentication.principal as OAuth2User)
-
-        val user = authService.findOrCreateUser(oAuthData.copy(refreshToken = UUID.randomUUID()))
+        val refreshToken = UUID.randomUUID()
+        val user = authService.findOrCreateUser(oAuthData, refreshToken)
         val loginResponse = LoginResponse(tokenManager.generateToken(user))
 
         response.contentType = MediaType.APPLICATION_JSON_VALUE
-        //response.addCookie(RefreshTokenCookie(user.refreshToken).cookie())
+        response.addCookie(RefreshTokenCookie(refreshToken).cookie())
         response.writer.write(objectMapper.writeValueAsString(loginResponse))
     }
 

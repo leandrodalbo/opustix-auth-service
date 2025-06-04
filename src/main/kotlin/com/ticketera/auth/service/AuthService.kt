@@ -7,17 +7,14 @@ import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.AuthPair
-import com.ticketera.auth.model.Role
-import com.ticketera.auth.model.VerifyEmailMessageKey
-import com.ticketera.auth.model.User
-import com.ticketera.auth.model.RefreshTokenCookie
-import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.*
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
@@ -30,25 +27,25 @@ class AuthService(
 
     @Transactional
     fun logout(refreshToken: String) {
-       // val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
-       //     ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
-      //  userRepository.save(user.copy(refreshToken = null))
+        val token = UUID.fromString(refreshToken)
+        val user = userRepository.findByRefreshToken(token)
+            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+        userRepository.save(user.withoutRefreshToken(token))
     }
 
     @Transactional
     fun refresh(refreshToken: String): AuthPair {
-      //  val user = userRepository.findByRefreshToken(UUID.fromString(refreshToken))
-       //     ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+        val token = UUID.fromString(refreshToken)
+        val user = userRepository.findByRefreshToken(token)
+            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
 
         val newToken = UUID.randomUUID()
 
-       // userRepository.save(user.copy(refreshToken = newToken))
-        val user = User(
-            UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
-            Role.USER.name, AuthProvider.LOCAL, true
-        )
+        userRepository.save(user.withoutRefreshToken(token)
+            .withNewRefreshToken(newToken))
+
         return AuthPair(
-           LoginResponse(tokenManager.generateToken(user)),
+            LoginResponse(tokenManager.generateToken(user)),
             RefreshTokenCookie(newToken).cookie()
         )
     }
@@ -60,7 +57,7 @@ class AuthService(
 
         validateLogin(user, request)
 
-      //  userRepository.save(user.copy(refreshToken = refreshToken))
+        userRepository.save(user.withNewRefreshToken(refreshToken))
 
         return AuthPair(
             LoginResponse(tokenManager.generateToken(user)),
@@ -87,16 +84,13 @@ class AuthService(
     }
 
     @Transactional
-    fun findOrCreateUser(authData: OAuthData): User {
+    fun findOrCreateUser(authData: OAuthData, refreshToken: UUID): User {
         return userRepository.findByEmail(authData.email)?.let {
             if (!it.isVerified) {
                 verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
                 throw AuthException(Message.USER_NOT_VERIFIED.text)
             } else {
-                userRepository.save(
                 it
-                //     it.copy(refreshToken = authData.refreshToken)
-                )
             }
         } ?: userRepository.save(
             User(
@@ -105,10 +99,13 @@ class AuthService(
                 password = "",
                 roles = Role.USER.name,
                 authProvider = AuthProvider.GOOGLE,
-                isVerified = false,
-                //refreshToken = authData.refreshToken
+                isVerified = false
             )
-        ).also { verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL) }
+        ).also {
+            userRepository.save(it.withNewRefreshToken(refreshToken))
+            verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        }
+
     }
 
     @Transactional
@@ -121,9 +118,6 @@ class AuthService(
 
         verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
     }
-
-    fun canRefresh(userData: String) =true
-        //userRepository.findByEmail(tokenManager.getEncodedUserEmail(userData))?.refreshTokens.is
 
     private fun validateLogin(user: User, req: LoginRequest) {
         if (!passwordEncoder.matches(

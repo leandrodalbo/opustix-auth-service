@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.CascadeType
 import jakarta.persistence.EnumType
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.Base64
 
@@ -45,7 +46,7 @@ data class User(
     val isVerified: Boolean,
 
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val refreshTokens: MutableList<RefreshToken> = mutableListOf()
+    val refreshTokens: Set<RefreshToken> = emptySet()
 ) {
 
     fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
@@ -96,6 +97,18 @@ data class User(
         private val mapper = ObjectMapper()
     }
 
+    fun withNewRefreshToken(refreshToken: UUID): User {
+        val tokens = refreshTokens + RefreshToken(
+            null,
+            refreshToken, Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli(), this
+        )
+        return this.copy(refreshTokens = tokens)
+    }
+
+    fun withoutRefreshToken(refreshToken: UUID): User {
+        val tokens = refreshTokens.filter { it.token != refreshToken }.toSet()
+        return this.copy(refreshTokens = tokens)
+    }
 
     override fun toString(): String {
         return "id:${id}|email:${email}"
