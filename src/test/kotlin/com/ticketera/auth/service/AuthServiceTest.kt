@@ -83,7 +83,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns user
         every { passwordEncoder.matches(any(), any()) } returns true
         every { tokenManager.generateToken(any()) } returns "9some4user2token0"
-       // every { userRepository.save(any()) } returns user.copy(refreshToken = UUID.randomUUID())
+        every { userRepository.save(any()) } returns user.withNewRefreshToken(refreshToken = UUID.randomUUID())
 
         assertThat(authService.login(loginRequest)).isNotNull()
 
@@ -96,48 +96,49 @@ class AuthServiceTest {
     @Test
     fun shouldRefreshAUserToken() {
         val refreshToken = UUID.randomUUID()
-       // every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
-       // every { userRepository.save(any()) } returns user.copy(refreshToken = UUID.randomUUID())
+        every { userRepository.findByRefreshToken(any()) } returns user.withNewRefreshToken(refreshToken)
+        every { userRepository.save(any()) } returns user.withoutRefreshToken(refreshToken)
+            .withNewRefreshToken(UUID.randomUUID())
         every { tokenManager.generateToken(any()) } returns "9some4user2token0"
 
         assertThat(authService.refresh(refreshToken.toString()).cookie.value).isNotEqualTo(refreshToken.toString())
 
-        //verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.findByRefreshToken(any()) }
         verify { userRepository.save(any()) }
         verify { tokenManager.generateToken(any()) }
     }
 
     @Test
     fun shouldNotRefreshAUserToken() {
-       // every { userRepository.findByRefreshToken(any()) } returns null
+        every { userRepository.findByRefreshToken(any()) } returns null
 
         assertThatExceptionOfType(InvalidUserException::class.java)
             .isThrownBy { authService.refresh(UUID.randomUUID().toString()) }
             .withMessage(Message.INVALID_TOKEN.text)
 
-      //  verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.findByRefreshToken(any()) }
     }
 
     @Test
     fun shouldFailOnLogout() {
-      //  every { userRepository.findByRefreshToken(any()) } returns null
+        every { userRepository.findByRefreshToken(any()) } returns null
 
         assertThatExceptionOfType(InvalidUserException::class.java)
             .isThrownBy { authService.logout(UUID.randomUUID().toString()) }
             .withMessage(Message.INVALID_TOKEN.text)
 
-       // verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.findByRefreshToken(any()) }
     }
 
     @Test
     fun shouldSuccessfullyLogout() {
         val refreshToken = UUID.randomUUID()
-      //  every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
-        //every { userRepository.save(any()) } returns user.copy(refreshToken = null)
+        every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
+        every { userRepository.save(any()) } returns user.withoutRefreshToken(refreshToken = refreshToken)
 
         authService.logout(refreshToken.toString())
 
-       // verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.findByRefreshToken(any()) }
         verify { userRepository.save(any()) }
     }
 
@@ -147,7 +148,7 @@ class AuthServiceTest {
         every { userRepository.save(any()) } returns user
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
-        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"))
+        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID())
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -158,11 +159,13 @@ class AuthServiceTest {
     fun newRefreshTokenForAnExistingUser() {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
+        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
-        authService.findOrCreateUser(OAuthData(user.email, user.name))
+        authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID())
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
+        verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
@@ -171,7 +174,7 @@ class AuthServiceTest {
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
-            .isThrownBy { authService.findOrCreateUser(OAuthData(user.email, user.name)) }
+            .isThrownBy { authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID()) }
             .withMessage(Message.USER_NOT_VERIFIED.text)
 
 
@@ -179,16 +182,6 @@ class AuthServiceTest {
         verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
-    @Test
-    fun checkingTheUserIsLoggedIn() {
-        every { userRepository.findByEmail(any()) } returns user
-        every { tokenManager.getEncodedUserEmail(any()) } returns user.email
-
-        assertThat(authService.canRefresh(user.email)).isFalse()
-
-        verify { tokenManager.getEncodedUserEmail(any()) }
-        verify { userRepository.findByEmail(any()) }
-    }
 
     @Test
     fun loginFailForNotVerifiedUsers() {

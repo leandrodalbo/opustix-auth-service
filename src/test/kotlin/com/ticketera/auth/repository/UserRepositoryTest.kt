@@ -2,14 +2,12 @@ package com.ticketera.auth.repository
 
 import com.ticketera.auth.AbstractContainerTest
 import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.RefreshToken
 import com.ticketera.auth.model.Role
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import java.time.Instant
 import java.util.UUID
 
 @DataJpaTest
@@ -57,18 +55,15 @@ class UserRepositoryTest : AbstractContainerTest() {
         val user = repository?.findByEmail("user@example.com")
 
         user?.let { found ->
-            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
-            found.refreshTokens.add(token)
-            repository?.save(found)
+            val token = UUID.randomUUID()
+            repository?.save(found.withNewRefreshToken(token))
 
-            val updatedUser = repository?.findByRefreshToken(token.token)
-
-            assertThat(user.email).isEqualTo("user@example.com")
+            val updatedUser = repository?.findByRefreshToken(token)
             assertThat(updatedUser?.refreshTokens?.filter {
-                it.token == token.token
+                it.token == token
             }).isNotEmpty
-        }
 
+        }
     }
 
     @Test
@@ -76,13 +71,12 @@ class UserRepositoryTest : AbstractContainerTest() {
         val user = repository?.findByEmail("user@example.com")
 
         user?.let { found ->
-            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
-            found.refreshTokens.add(token)
-            repository?.save(found)
+            val token = UUID.randomUUID()
+            repository?.save(found.withNewRefreshToken(token))
 
             val updatedUser = repository?.findByEmail("user@example.com")
             assertThat(updatedUser?.refreshTokens?.filter {
-                it.token == token.token
+                it.token == token
             }).isNotEmpty
         }
 
@@ -93,18 +87,16 @@ class UserRepositoryTest : AbstractContainerTest() {
         val user = repository?.findByEmail("user@example.com")
 
         user?.let { found ->
-            val token = RefreshToken(null, UUID.randomUUID(), Instant.now().toEpochMilli(), user = user)
-            found.refreshTokens.add(token)
+            val token = UUID.randomUUID()
 
-            val withToken = repository?.save(found)
+            val withToken = repository?.save(found.withNewRefreshToken(token))
             withToken?.let {
-                it.refreshTokens.remove(withToken.refreshTokens[0])
-                repository?.save(it)
+                repository?.save(it.withoutRefreshToken(token))
             }
 
             val updatedUser = repository?.findByEmail("user@example.com")
             assertThat(updatedUser?.refreshTokens?.filter {
-                it.token == token.token
+                it.token == token
             }).isEmpty()
         }
     }

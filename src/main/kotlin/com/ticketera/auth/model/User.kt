@@ -113,4 +113,7 @@ data class User(
     override fun toString(): String {
         return "id:${id}|email:${email}"
     }
+
+    override fun equals(other: Any?) = this === other || (other is User && id == other.id)
+    override fun hashCode() = id.hashCode()
 }

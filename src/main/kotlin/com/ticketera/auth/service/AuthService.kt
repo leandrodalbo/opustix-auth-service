@@ -7,14 +7,17 @@ import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.*
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.Role
+import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.AuthPair
+import com.ticketera.auth.model.RefreshTokenCookie
+import com.ticketera.auth.model.VerifyEmailMessageKey
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
@@ -39,10 +42,15 @@ class AuthService(
         val user = userRepository.findByRefreshToken(token)
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
 
+        if (user.refreshTokens.any { it.token == token && it.isExpired() })
+            throw AuthException(Message.INVALID_TOKEN.text)
+
         val newToken = UUID.randomUUID()
 
-        userRepository.save(user.withoutRefreshToken(token)
-            .withNewRefreshToken(newToken))
+        userRepository.save(
+            user.withoutRefreshToken(token)
+                .withNewRefreshToken(newToken)
+        )
 
         return AuthPair(
             LoginResponse(tokenManager.generateToken(user)),
@@ -78,14 +86,14 @@ class AuthService(
             false
         )
 
-        userRepository.save(user).also {
-            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-        }
+        userRepository.save(user)
+        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+
     }
 
     @Transactional
     fun findOrCreateUser(authData: OAuthData, refreshToken: UUID): User {
-        return userRepository.findByEmail(authData.email)?.let {
+        val user = userRepository.findByEmail(authData.email)?.let {
             if (!it.isVerified) {
                 verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
                 throw AuthException(Message.USER_NOT_VERIFIED.text)
@@ -101,11 +109,10 @@ class AuthService(
                 authProvider = AuthProvider.GOOGLE,
                 isVerified = false
             )
-        ).also {
-            userRepository.save(it.withNewRefreshToken(refreshToken))
-            verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-        }
-
+        )
+        userRepository.save(user.withNewRefreshToken(refreshToken))
+        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        return user
     }
 
     @Transactional
