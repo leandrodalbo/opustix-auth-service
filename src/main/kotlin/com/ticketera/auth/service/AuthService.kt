@@ -7,9 +7,14 @@ import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.*
+import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.AuthPair
+import com.ticketera.auth.model.Role
+import com.ticketera.auth.model.VerifyEmailMessageKey
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.RefreshTokenCookie
+import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.repository.UserRepository
-import jakarta.servlet.http.Cookie
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

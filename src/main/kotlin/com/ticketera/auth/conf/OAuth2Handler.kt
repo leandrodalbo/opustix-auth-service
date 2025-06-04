@@ -7,7 +7,6 @@ import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.RefreshTokenCookie
 import com.ticketera.auth.service.AuthService
-import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.MediaType
