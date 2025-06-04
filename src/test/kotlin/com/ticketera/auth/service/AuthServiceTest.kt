@@ -1,7 +1,6 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
-import com.ticketera.auth.dto.request.RefreshTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
@@ -101,7 +100,7 @@ class AuthServiceTest {
         every { userRepository.save(any()) } returns user.copy(refreshToken = UUID.randomUUID())
         every { tokenManager.generateToken(any()) } returns "9some4user2token0"
 
-        assertThat(authService.refresh(RefreshTokenRequest(refreshToken)).refreshToken).isNotEqualTo(refreshToken)
+        assertThat(authService.refresh(refreshToken.toString()).cookie.value).isNotEqualTo(refreshToken.toString())
 
         verify { userRepository.findByRefreshToken(any()) }
         verify { userRepository.save(any()) }
@@ -113,7 +112,7 @@ class AuthServiceTest {
         every { userRepository.findByRefreshToken(any()) } returns null
 
         assertThatExceptionOfType(InvalidUserException::class.java)
-            .isThrownBy { authService.refresh(RefreshTokenRequest(UUID.randomUUID())) }
+            .isThrownBy { authService.refresh(UUID.randomUUID().toString()) }
             .withMessage(Message.INVALID_TOKEN.text)
 
         verify { userRepository.findByRefreshToken(any()) }
@@ -124,7 +123,7 @@ class AuthServiceTest {
         every { userRepository.findByRefreshToken(any()) } returns null
 
         assertThatExceptionOfType(InvalidUserException::class.java)
-            .isThrownBy { authService.logout(RefreshTokenRequest(UUID.randomUUID())) }
+            .isThrownBy { authService.logout(UUID.randomUUID().toString()) }
             .withMessage(Message.INVALID_TOKEN.text)
 
         verify { userRepository.findByRefreshToken(any()) }
@@ -136,7 +135,7 @@ class AuthServiceTest {
         every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshToken)
         every { userRepository.save(any()) } returns user.copy(refreshToken = null)
 
-        authService.logout(RefreshTokenRequest(refreshToken))
+        authService.logout(refreshToken.toString())
 
         verify { userRepository.findByRefreshToken(any()) }
         verify { userRepository.save(any()) }

@@ -1,3 +1,5 @@
 package com.ticketera.auth.model
 
-data class OAuthData(val email: String, val name: String)
+import java.util.UUID
+
+data class OAuthData(val email: String, val name: String, val refreshToken: UUID? = null)
