@@ -33,7 +33,7 @@ class UserRepositoryTest : AbstractContainerTest() {
         assertThat(user?.name).isNotNull()
         assertThat(user?.password).isNotNull()
         assertThat(user?.roles()).contains(Role.USER)
-        assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+        assertThat(user?.authProviders).isEqualTo(AuthProvider.LOCAL)
 
     }
 
@@ -46,7 +46,7 @@ class UserRepositoryTest : AbstractContainerTest() {
         assertThat(user?.email).isNotNull()
         assertThat(user?.password).isNotNull()
         assertThat(user?.roles()).contains(Role.USER)
-        assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+        assertThat(user?.authProviders).isEqualTo(AuthProvider.LOCAL)
 
     }
 

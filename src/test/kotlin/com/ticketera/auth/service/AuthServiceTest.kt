@@ -37,7 +37,7 @@ class AuthServiceTest {
 
     private val user = User(
         UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
-        Role.USER.name, AuthProvider.LOCAL, true
+        Role.USER.name, AuthProvider.LOCAL.name, true
     )
 
     @Test
@@ -168,7 +168,7 @@ class AuthServiceTest {
         every { userRepository.save(any()) } returns user
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
-        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID())
+        authService.oauthSignUp(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID(), AuthProvider.GOOGLE)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -181,7 +181,7 @@ class AuthServiceTest {
         every { userRepository.save(any()) } returns user
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
-        authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID())
+        authService.oauthSignUp(OAuthData(user.email, user.name), UUID.randomUUID(), AuthProvider.GOOGLE)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -194,7 +194,13 @@ class AuthServiceTest {
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
-            .isThrownBy { authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID()) }
+            .isThrownBy {
+                authService.oauthSignUp(
+                    OAuthData(user.email, user.name),
+                    UUID.randomUUID(),
+                    AuthProvider.GOOGLE
+                )
+            }
             .withMessage(Message.USER_NOT_VERIFIED.text)
 
 

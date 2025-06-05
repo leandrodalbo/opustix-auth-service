@@ -20,7 +20,7 @@ class TokenManagerTest {
         "Joe Doe",
         "a32dga34adfv34",
         Role.USER.name,
-        AuthProvider.LOCAL,
+        AuthProvider.LOCAL.name,
         false
     )
 

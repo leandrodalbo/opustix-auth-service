@@ -1,0 +1,1 @@
+ALTER TABLE users RENAME COLUMN auth_provider TO auth_providers;

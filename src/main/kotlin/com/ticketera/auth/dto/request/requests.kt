@@ -24,3 +24,8 @@ data class SignUpRequest(
 )
 
 data class LoginRequest(val email: String, val pass: String)
+
+data class UpdateUserDetails(
+    val name: String?,
+    val password: String?
+)

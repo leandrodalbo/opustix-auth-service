@@ -12,19 +12,33 @@ class UserTest {
         "Joe Doe",
         "a32dga34adfv34",
         Role.USER.name,
-        AuthProvider.LOCAL,
+        AuthProvider.LOCAL.name,
         false
-
     )
 
     @Test
-    fun itShouldGiveMeASetOfRoles() {
+    fun itHasASetOfRoles() {
         assertThat(user.roles()).isEqualTo(setOf(Role.USER))
     }
 
     @Test
-    fun itShouldGiveMeAUserWithMoreRoles() {
-        assertThat(user.withRoles(setOf(Role.USER, Role.MANAGER)).roles).isEqualTo("USER,MANAGER")
+    fun itShouldAddAnewRole() {
+        assertThat(user.withAddedRole(Role.MANAGER).roles).isEqualTo("USER,MANAGER")
+    }
+
+    @Test
+    fun itShouldRemoveARole() {
+        assertThat(user.withoutRole(Role.USER).roles).isEmpty()
+    }
+
+    @Test
+    fun itHasASetOfAuthProviders() {
+        assertThat(user.authProviders()).isEqualTo(setOf(AuthProvider.LOCAL))
+    }
+
+    @Test
+    fun itShouldAddAnewAuthProvider() {
+        assertThat(user.withAddedAuthProvider(AuthProvider.GOOGLE).authProviders).isEqualTo("LOCAL,GOOGLE")
     }
 
     @Test
@@ -41,7 +55,7 @@ class UserTest {
         assertThat(decoded.email).isEqualTo(user.email)
         assertThat(decoded.name).isEqualTo(user.name)
         assertThat(decoded.roles).isEqualTo(user.roles)
-        assertThat(decoded.authProvider).isEqualTo(user.authProvider)
+        assertThat(decoded.authProviders).isEqualTo(user.authProviders)
         assertThat(decoded.isVerified).isEqualTo(user.isVerified)
     }
 

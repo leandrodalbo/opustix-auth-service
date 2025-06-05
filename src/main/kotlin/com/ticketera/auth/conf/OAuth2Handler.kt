@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
+import com.ticketera.auth.model.AuthProvider
 import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.RefreshTokenCookie
 import com.ticketera.auth.service.AuthService
@@ -32,7 +33,7 @@ class OAuth2Handler(
     ) {
         val oAuthData = this.extractAuthData(authentication.principal as OAuth2User)
         val refreshToken = UUID.randomUUID()
-        val user = authService.findOrCreateUser(oAuthData, refreshToken)
+        val user = authService.oauthSignUp(oAuthData, refreshToken, AuthProvider.GOOGLE)
         val loginResponse = LoginResponse(tokenManager.generateToken(user))
 
         response.contentType = MediaType.APPLICATION_JSON_VALUE

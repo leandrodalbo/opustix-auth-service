@@ -80,44 +80,45 @@ class AuthService(
 
     @Transactional
     fun signUp(signInRequest: SignUpRequest) {
-        validateSignUp(signInRequest)
-        val user = User(
-            null,
-            signInRequest.email,
-            signInRequest.name,
-            passwordEncoder.encode(signInRequest.pass),
-            Role.USER.name,
-            AuthProvider.LOCAL,
-            false
-        )
+        val user = validatedSignUp(signInRequest.email, AuthProvider.LOCAL)
+            ?.withAddedAuthProvider(AuthProvider.LOCAL)
+            ?.copy(name = signInRequest.name, password = passwordEncoder.encode(signInRequest.pass), isVerified = false)
+            ?: User(
+                null,
+                signInRequest.email,
+                signInRequest.name,
+                passwordEncoder.encode(signInRequest.pass),
+                Role.USER.name,
+                AuthProvider.LOCAL.name,
+                false
+            )
 
         userRepository.save(user)
         verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-
     }
 
     @Transactional
-    fun findOrCreateUser(authData: OAuthData, refreshToken: UUID): User {
-        val user = userRepository.findByEmail(authData.email)?.let {
-            if (!it.isVerified) {
-                verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
-                throw AuthException(Message.USER_NOT_VERIFIED.text)
-            } else {
-                it
+    fun oauthSignUp(authData: OAuthData, refreshToken: UUID, authProvider: AuthProvider): User {
+        val user = validatedSignUp(authData.email, authProvider)
+            .let { found ->
+                found?.withNewRefreshToken(refreshToken)
+                    .also {
+                        if (it?.authProviders()?.contains(authProvider) == false)
+                            it.withAddedAuthProvider(authProvider)
+                    }
+                    ?: User(
+                        email = authData.email,
+                        name = authData.name,
+                        password = "",
+                        roles = Role.USER.name,
+                        authProviders = authProvider.name,
+                        isVerified = false
+                    ).withNewRefreshToken(refreshToken)
             }
-        } ?: userRepository.save(
-            User(
-                email = authData.email,
-                name = authData.name,
-                password = "",
-                roles = Role.USER.name,
-                authProvider = AuthProvider.GOOGLE,
-                isVerified = false
-            )
-        )
-        userRepository.save(user.withNewRefreshToken(refreshToken))
+
+        val savedUser = userRepository.save(user)
         verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-        return user
+        return savedUser
     }
 
     @Transactional
@@ -144,13 +145,18 @@ class AuthService(
         }
     }
 
-    private fun validateSignUp(req: SignUpRequest) {
-        userRepository.findByEmail(req.email)?.let {
-            if (it.isVerified) throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
-            else {
-                verifyUserService.sendVerificationEmail(req.email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
+    private fun validatedSignUp(email: String, authProvider: AuthProvider): User? {
+        userRepository.findByEmail(email).let {
+            if (authProvider == AuthProvider.LOCAL && it?.authProviders()
+                    ?.contains(authProvider) == true && it.isVerified
+            ) throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
+
+            if (it?.authProviders()?.contains(authProvider) == true && !it.isVerified
+            ) {
+                verifyUserService.sendVerificationEmail(email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
                 throw AuthException(Message.USER_NOT_VERIFIED.text)
             }
+            return it
         }
     }
 }
