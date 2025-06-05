@@ -42,8 +42,13 @@ class AuthService(
         val user = userRepository.findByRefreshToken(token)
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
 
-        if (user.refreshTokens.any { it.token == token && it.isExpired() })
+        if (user.refreshTokens.any { it.token == token && it.isExpired() }) {
+            userRepository.save(
+                user.withoutRefreshToken(token)
+            )
+
             throw AuthException(Message.INVALID_TOKEN.text)
+        }
 
         val newToken = UUID.randomUUID()
 

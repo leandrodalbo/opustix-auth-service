@@ -62,4 +62,16 @@ class UserTest {
         assertThat(user.copy() == user.copy()).isTrue()
     }
 
+    @Test
+    fun shouldAddARefreshToken() {
+        assertThat(user.withNewRefreshToken(UUID.randomUUID()).refreshTokens).isNotEmpty()
+    }
+
+    @Test
+    fun shouldRemoveTheARefreshToken() {
+        val uCopy = user.withNewRefreshToken(UUID.randomUUID())
+        assertThat(uCopy.withoutRefreshToken(uCopy.refreshTokens.first().token).refreshTokens).isEmpty()
+    }
+
+
 }

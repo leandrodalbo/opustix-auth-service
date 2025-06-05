@@ -6,11 +6,7 @@ import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.User
-import com.ticketera.auth.model.Role
-import com.ticketera.auth.model.AuthProvider
-import com.ticketera.auth.model.OAuthData
-import com.ticketera.auth.model.VerifyUser
+import com.ticketera.auth.model.*
 import com.ticketera.auth.repository.UserRepository
 import io.mockk.mockk
 import io.mockk.verify
@@ -20,6 +16,7 @@ import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class AuthServiceTest {
@@ -109,7 +106,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun shouldNotRefreshAUserToken() {
+    fun shouldNotRefreshAUserTokenIfNotFound() {
         every { userRepository.findByRefreshToken(any()) } returns null
 
         assertThatExceptionOfType(InvalidUserException::class.java)
@@ -117,6 +114,24 @@ class AuthServiceTest {
             .withMessage(Message.INVALID_TOKEN.text)
 
         verify { userRepository.findByRefreshToken(any()) }
+    }
+
+    @Test
+    fun shouldNotRefreshAUserTokenIfItHasExpired() {
+        val token = RefreshToken(
+            token = UUID.randomUUID(),
+            expiry = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli(),
+            user = user
+        )
+        every { userRepository.findByRefreshToken(any()) } returns user.copy(refreshTokens = setOf(token))
+        every { userRepository.save(any()) } returns user.withoutRefreshToken(token.token)
+
+        assertThatExceptionOfType(AuthException::class.java)
+            .isThrownBy { authService.refresh(token.token.toString()) }
+            .withMessage(Message.INVALID_TOKEN.text)
+
+        verify { userRepository.findByRefreshToken(any()) }
+        verify { userRepository.save(any()) }
     }
 
     @Test
