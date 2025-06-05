@@ -25,4 +25,13 @@ data class VerifyUser(
 ) {
 
     fun isExpired(): Boolean = Instant.now().toEpochMilli() > expiry
+
+    override fun toString(): String {
+        return "token:${token}|email:${email}|expiry:${expiry}"
+    }
+
+    override fun equals(other: Any?) =
+        (this === other) || (this.hashCode() == other.hashCode())
+
+    override fun hashCode() = token.hashCode()
 }

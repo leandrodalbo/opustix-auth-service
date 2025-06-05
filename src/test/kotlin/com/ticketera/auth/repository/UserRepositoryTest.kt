@@ -52,10 +52,52 @@ class UserRepositoryTest : AbstractContainerTest() {
 
     @Test
     fun shouldFindAUserByRefreshToken() {
-        val user = repository?.findByRefreshToken(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
+        val user = repository?.findByEmail("user@example.com")
 
-        assertThat(user?.id).isNotNull()
-        assertThat(user?.refreshToken).isEqualTo(UUID.fromString("8f2d7c4a-3a09-4f2e-9c5b-71e65d24f5b3"))
+        user?.let { found ->
+            val token = UUID.randomUUID()
+            repository?.save(found.withNewRefreshToken(token))
 
+            val updatedUser = repository?.findByRefreshToken(token)
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token
+            }).isNotEmpty
+
+        }
+    }
+
+    @Test
+    fun shouldSaveTheUserRefreshToken() {
+        val user = repository?.findByEmail("user@example.com")
+
+        user?.let { found ->
+            val token = UUID.randomUUID()
+            repository?.save(found.withNewRefreshToken(token))
+
+            val updatedUser = repository?.findByEmail("user@example.com")
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token
+            }).isNotEmpty
+        }
+
+    }
+
+    @Test
+    fun shouldDeleteTheUserRefreshToken() {
+        val user = repository?.findByEmail("user@example.com")
+
+        user?.let { found ->
+            val token = UUID.randomUUID()
+
+            val withToken = repository?.save(found.withNewRefreshToken(token))
+            withToken?.let {
+                repository?.save(it.withoutRefreshToken(token))
+            }
+
+            val updatedUser = repository?.findByEmail("user@example.com")
+            assertThat(updatedUser?.refreshTokens?.filter {
+                it.token == token
+            }).isEmpty()
+        }
     }
 }

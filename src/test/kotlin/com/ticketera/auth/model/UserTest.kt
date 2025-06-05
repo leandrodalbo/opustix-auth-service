@@ -2,6 +2,7 @@ package com.ticketera.auth.model
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class UserTest {
 
@@ -43,5 +44,34 @@ class UserTest {
         assertThat(decoded.authProvider).isEqualTo(user.authProvider)
         assertThat(decoded.isVerified).isEqualTo(user.isVerified)
     }
+
+    @Test
+    fun shouldOverrideToString() {
+        val uCopy = user.copy(UUID.randomUUID())
+        assertThat(uCopy.toString()).isEqualTo("id:${uCopy.id}|email:${uCopy.email}")
+    }
+
+    @Test
+    fun shouldOverrideHashCode() {
+        val uCopy = user.copy(id = UUID.randomUUID())
+        assertThat(uCopy.hashCode()).isEqualTo(uCopy.copy().hashCode())
+    }
+
+    @Test
+    fun shouldOverrideEquals() {
+        assertThat(user.copy() == user.copy()).isTrue()
+    }
+
+    @Test
+    fun shouldAddARefreshToken() {
+        assertThat(user.withNewRefreshToken(UUID.randomUUID()).refreshTokens).isNotEmpty()
+    }
+
+    @Test
+    fun shouldRemoveTheARefreshToken() {
+        val uCopy = user.withNewRefreshToken(UUID.randomUUID())
+        assertThat(uCopy.withoutRefreshToken(uCopy.refreshTokens.first().token).refreshTokens).isEmpty()
+    }
+
 
 }

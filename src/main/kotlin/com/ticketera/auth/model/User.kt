@@ -10,8 +10,11 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Column
 import jakarta.persistence.Enumerated
+import jakarta.persistence.OneToMany
+import jakarta.persistence.CascadeType
 import jakarta.persistence.EnumType
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.Base64
 
@@ -42,8 +45,8 @@ data class User(
     @Column(name = "is_verified", nullable = false)
     val isVerified: Boolean,
 
-    @Column(name = "refresh_token", nullable = true)
-    val refreshToken: UUID? = null
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val refreshTokens: Set<RefreshToken> = emptySet()
 ) {
 
     fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
@@ -87,12 +90,30 @@ data class User(
                 "",
                 userData.roles,
                 AuthProvider.valueOf(userData.authProvider),
-                userData.isVerified,
-                null
+                userData.isVerified
             )
         }
 
         private val mapper = ObjectMapper()
     }
 
+    fun withNewRefreshToken(refreshToken: UUID): User {
+        val tokens = refreshTokens + RefreshToken(
+            null,
+            refreshToken, Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli(), this
+        )
+        return this.copy(refreshTokens = tokens)
+    }
+
+    fun withoutRefreshToken(refreshToken: UUID): User {
+        val tokens = refreshTokens.filter { it.token != refreshToken }.toSet()
+        return this.copy(refreshTokens = tokens)
+    }
+
+    override fun toString(): String {
+        return "id:${id}|email:${email}"
+    }
+
+    override fun equals(other: Any?) = this === other || (other is User && id == other.id)
+    override fun hashCode() = id.hashCode()
 }

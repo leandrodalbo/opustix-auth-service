@@ -25,9 +25,9 @@ class VerifyUserService(
         if (VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED.equals(emailMessageKey)) {
             verifyUserRepository.delete(
                 verifyUserRepository.findByEmail(email) ?: throw AuthException(Message.VERIFY_SERVICE_FAILED.text)
-            ).also {
-                if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
-            }
+            )
+        if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
+
 
         } else {
             val toBeSaved = verifyUserRepository.findByEmail(email)
