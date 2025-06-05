@@ -33,6 +33,9 @@ data class RefreshToken(
     override fun toString(): String {
         return "id:${id}|user:${user.email}|token:${token}"
     }
-    override fun equals(other: Any?) = this === other || (other is User && id == other.id)
+
+    override fun equals(other: Any?) =
+        (this === other) || (this.hashCode() == other.hashCode())
+
     override fun hashCode() = id.hashCode()
 }
