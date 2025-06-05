@@ -52,13 +52,13 @@ class UserTest {
     }
 
     @Test
-    fun shouldHashCode() {
+    fun shouldOverrideHashCode() {
         val uCopy = user.copy(id = UUID.randomUUID())
         assertThat(uCopy.hashCode()).isEqualTo(uCopy.copy().hashCode())
     }
 
     @Test
-    fun shouldOverrideToEquals() {
+    fun shouldOverrideEquals() {
         assertThat(user.copy() == user.copy()).isTrue()
     }
 

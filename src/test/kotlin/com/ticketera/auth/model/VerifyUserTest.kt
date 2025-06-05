@@ -26,12 +26,12 @@ class VerifyUserTest {
     }
 
     @Test
-    fun shouldHashCode() {
+    fun shouldOverrideHashCode() {
         assertThat(verifyUser.hashCode()).isEqualTo(uuid.hashCode())
     }
 
     @Test
-    fun shouldOverrideToEquals() {
+    fun shouldOverrideEquals() {
         assertThat(verifyUser == verifyUser.copy()).isTrue()
     }
 }

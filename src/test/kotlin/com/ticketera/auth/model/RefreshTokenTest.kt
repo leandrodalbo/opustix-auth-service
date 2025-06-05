@@ -44,7 +44,7 @@ class RefreshTokenTest {
     }
 
     @Test
-    fun shouldHashCode() {
+    fun shouldOverrideHashCode() {
         val uuid = UUID.randomUUID()
         val refreshToken = RefreshToken(
             uuid,
@@ -56,7 +56,7 @@ class RefreshTokenTest {
     }
 
     @Test
-    fun shouldOverrideToEquals() {
+    fun shouldOverrideEquals() {
         val uuid = UUID.randomUUID()
         val refreshToken = RefreshToken(
             uuid,

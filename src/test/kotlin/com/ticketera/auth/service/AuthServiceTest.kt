@@ -6,7 +6,12 @@ import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
-import com.ticketera.auth.model.*
+import com.ticketera.auth.model.User
+import com.ticketera.auth.model.Role
+import com.ticketera.auth.model.AuthProvider
+import com.ticketera.auth.model.OAuthData
+import com.ticketera.auth.model.VerifyUser
+import com.ticketera.auth.model.RefreshToken
 import com.ticketera.auth.repository.UserRepository
 import io.mockk.mockk
 import io.mockk.verify
