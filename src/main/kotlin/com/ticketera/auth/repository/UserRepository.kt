@@ -14,4 +14,6 @@ interface UserRepository : JpaRepository<User, UUID> {
 
     @Query("SELECT u FROM User u JOIN u.refreshTokens rt WHERE rt.token = :token")
     fun findByRefreshToken(@Param("token") token: UUID): User?
+
+    fun findByPasswordResetToken(passwordResetToken: UUID): User?
 }

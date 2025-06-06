@@ -28,7 +28,21 @@ data class LoginRequest(val email: String, val pass: String)
 data class NewPasswordTokenRequest(
     @field:Email(message = "Invalid email format")
     @field:NotBlank(message = "Email is required")
-    val email: String
+    val email: String,
+
+    )
+
+data class NewPasswordRequest(
+    @field:NotBlank(message = "Token is required")
+    val token: String,
+
+    @field:NotBlank(message = "Password is required")
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    @field:Pattern(
+        regexp = "^(?=.*[!@#\$%^&*(),.?\":{}|<>]).{8,}$",
+        message = "Password must contain at least one special character"
+    )
+    val pass: String
 )
 
 data class UserRoleRequest(val email: String, val role: Role, val userRoleChange: UserRoleChange)

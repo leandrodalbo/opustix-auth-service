@@ -34,6 +34,9 @@ email:
   subject4: "Password Reset"
   message4: |
     hi... complete the message here!
+  subject5: "Password Changed"
+  message5: |
+    hi... complete the message here!
   closing: complete the message here!
 
     

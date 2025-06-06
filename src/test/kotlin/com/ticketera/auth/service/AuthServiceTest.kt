@@ -1,6 +1,7 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
 import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.errors.AuthException
@@ -286,12 +287,38 @@ class AuthServiceTest {
     fun passwordResetEmailIsSentToTheUser() {
         every { userRepository.findByEmail(any()) } returns user
         every { userRepository.save(any()) } returns user
-        every { notificationsService.sendPasswordResetEmail(any(), any()) } returns Unit
+        every { notificationsService.sendPasswordResetNotifications(any(), any(), any()) } returns Unit
 
         authService.setPasswordToken(NewPasswordTokenRequest("user@mail.com"))
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
-        verify { notificationsService.sendPasswordResetEmail(any(), any()) }
+        verify { notificationsService.sendPasswordResetNotifications(any(), any(), any()) }
+    }
+
+    @Test
+    fun passwordIsNotSavedWithoutAValidUser() {
+        every { userRepository.findByPasswordResetToken(any()) } returns null
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.setNewPassword(NewPasswordRequest(UUID.randomUUID().toString(), "0NO88pass?0")) }
+            .withMessage(Message.INVALID_TOKEN.text)
+
+        verify { userRepository.findByPasswordResetToken(any()) }
+    }
+
+    @Test
+    fun aPasswordIsSavedForTheUser() {
+        every { userRepository.findByPasswordResetToken(any()) } returns user
+        every { userRepository.save(any()) } returns user
+        every { notificationsService.sendPasswordResetNotifications(any(), any(), any()) } returns Unit
+        every { passwordEncoder.encode(any()) } returns "encodedPassword"
+
+        authService.setNewPassword(NewPasswordRequest(UUID.randomUUID().toString(), "0NO88pass?0"))
+
+        verify { userRepository.findByPasswordResetToken(any()) }
+        verify { userRepository.save(any()) }
+        verify { passwordEncoder.encode(any()) }
+        verify { notificationsService.sendPasswordResetNotifications(any(), any(), any()) }
     }
 }

@@ -1,6 +1,7 @@
 package com.ticketera.auth.controller
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
 import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
@@ -63,4 +64,8 @@ class AuthController(private val authService: AuthService) {
     @PutMapping("/password/token")
     fun passwordToken(@Valid @RequestBody newPasswordTokenRequest: NewPasswordTokenRequest) =
         authService.setPasswordToken(newPasswordTokenRequest)
+
+    @PutMapping("/password/new")
+    fun newPassword(@Valid @RequestBody newPasswordRequest: NewPasswordRequest) =
+        authService.setNewPassword(newPasswordRequest)
 }

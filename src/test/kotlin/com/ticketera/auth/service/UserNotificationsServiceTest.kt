@@ -28,19 +28,19 @@ class UserNotificationsServiceTest {
         "someone@opustix.com",
         "s0", "m0", "s1", "m1",
         "s2", "m2", "s3", "m3",
-        "s4", "m4",
+        "s4", "m4", "s5", "m5",
         "statement"
     )
 
     @Test
-    fun shouldSendApasswordResetEmail() {
+    fun shouldSendAPasswordResetNotification() {
         val service = UserNotificationsService(verifyUserRepository, emailService, emailMessage)
 
         every { emailService.send(any(), any(), any(), any()) } returns Result.success(
             SendEmailResponse.builder().build()
         )
 
-        service.sendPasswordResetEmail("usermail@mail.com", UUID.randomUUID())
+        service.sendPasswordResetNotifications("usermail@mail.com", EmailMessageKey.PASSWORD_RESET, UUID.randomUUID())
 
         verify { emailService.send(any(), any(), any(), any()) }
     }

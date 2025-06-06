@@ -17,5 +17,7 @@ data class VerifyEmailMessage(
     val message3: String,
     val subject4: String,
     val message4: String,
+    val subject5: String,
+    val message5: String,
     val closing: String
 )

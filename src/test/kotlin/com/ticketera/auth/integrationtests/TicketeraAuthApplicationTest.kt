@@ -30,7 +30,6 @@ import org.springframework.web.client.RestClient
 @AutoConfigureMockMvc
 class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
-
     @LocalServerPort
     private var port: Int = 0
 
@@ -162,6 +161,19 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
         val req = NewPasswordTokenRequest("user@example.com")
         val resp = restClient.put()
             .uri("/auth/password/token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+    @Test
+    fun itShouldSetANewPassword() {
+        val req = NewPasswordRequest("e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd", "0JUST?tryToPass23")
+        val resp = restClient.put()
+            .uri("/auth/password/new")
             .contentType(MediaType.APPLICATION_JSON)
             .body(req)
             .retrieve()

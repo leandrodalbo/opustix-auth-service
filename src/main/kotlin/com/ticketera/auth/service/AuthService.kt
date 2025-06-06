@@ -1,6 +1,7 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
 import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.dto.request.SignUpRequest
@@ -113,10 +114,34 @@ class AuthService(
         val saved = userRepository.save(
             user.copy(
                 passwordResetToken = UUID.randomUUID(),
-                passwordResetTokenExpiry = Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()
+                passwordResetTokenExpiry = Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
             )
         )
-        notificationsService.sendPasswordResetEmail(user.email, saved.passwordResetToken)
+        notificationsService.sendPasswordResetNotifications(
+            user.email,
+            EmailMessageKey.PASSWORD_RESET,
+            saved.passwordResetToken
+        )
+    }
+
+    @Transactional
+    fun setNewPassword(newPasswordRequest: NewPasswordRequest) {
+        val user = userRepository.findByPasswordResetToken(UUID.fromString(newPasswordRequest.token))
+            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+
+        val saved = userRepository.save(
+            user.copy(
+                password = passwordEncoder.encode(newPasswordRequest.pass),
+                passwordResetToken = null,
+                passwordResetTokenExpiry = null
+            )
+        )
+
+        notificationsService.sendPasswordResetNotifications(
+            user.email,
+            EmailMessageKey.PASSWORD_CHANGED,
+            saved.passwordResetToken
+        )
     }
 
     private fun localLoginValidation(user: User, req: LoginRequest) {
@@ -197,5 +222,4 @@ class AuthService(
         } else
             throw AuthException(Message.EMAIL_IN_USE.text)
     }
-
 }

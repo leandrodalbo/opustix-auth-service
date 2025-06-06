@@ -43,8 +43,8 @@ class UserNotificationsService(
         }
     }
 
-    fun sendPasswordResetEmail(emailTo: String, token: UUID?) {
-        if (emailMessage.enabled) notifyUser(EmailMessageKey.PASSWORD_RESET, emailTo, token)
+    fun sendPasswordResetNotifications(emailTo: String, messageKey: EmailMessageKey, token: UUID?) {
+        if (emailMessage.enabled) notifyUser(messageKey, emailTo, token)
     }
 
     fun findFromToken(token: String): VerifyUser = verifyUserRepository.findById(UUID.fromString(token))
@@ -71,6 +71,7 @@ class UserNotificationsService(
         EmailMessageKey.NOT_VERIFIED_SIGN_UP -> SubjectAndMessage(emailMessage.subject2, emailMessage.message2)
         EmailMessageKey.SUCCESSFULLY_VERIFIED -> SubjectAndMessage(emailMessage.subject3, emailMessage.message3)
         EmailMessageKey.PASSWORD_RESET -> SubjectAndMessage(emailMessage.subject4, emailMessage.message4)
+        EmailMessageKey.PASSWORD_CHANGED -> SubjectAndMessage(emailMessage.subject5, emailMessage.message5)
     }
 
     private data class SubjectAndMessage(val subject: String, val message: String)
