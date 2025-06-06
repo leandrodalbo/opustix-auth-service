@@ -7,7 +7,7 @@ enum class Message(val text: String) {
     REQUEST_FAILED("Request Failed"),
     INVALID_TOKEN("Invalid Token"),
     EMAIL_SERVICE_FAILED("Email Service Failed"),
-    VERIFY_SERVICE_FAILED("Verify Service Failed"),
+    NOTIFICATIONS_SERVICE_FAILED("Notifications Service Failed"),
     USER_NOT_VERIFIED("User Not Verified"),
     NOT_ADMIN_USER("Not Admin User"),
     USER_ALREADY_CONTAINS_THE_ROLE("The User Already has the role"),

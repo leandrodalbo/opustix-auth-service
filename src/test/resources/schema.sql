@@ -9,7 +9,9 @@ CREATE TABLE users (
     roles VARCHAR(255) NOT NULL,
     auth_providers VARCHAR(100) NOT NULL,
     is_verified BOOLEAN NOT NULL,
-    refresh_token UUID
+    refresh_token UUID,
+    password_reset_token UUID,
+    password_reset_token_expiry BIGINT
 );
 
 CREATE TABLE verify_user (

@@ -1,7 +1,7 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.errors.AuthException
-import com.ticketera.auth.model.VerifyEmailMessageKey
+import com.ticketera.auth.model.EmailMessageKey
 import com.ticketera.auth.model.VerifyUser
 import com.ticketera.auth.props.VerifyEmailMessage
 import com.ticketera.auth.repository.VerifyUserRepository
@@ -18,7 +18,7 @@ import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 
-class VerifyUserServiceTest {
+class UserNotificationsServiceTest {
     private val emailService: EmailService = mockk()
     private val verifyUserRepository: VerifyUserRepository = mockk()
 
@@ -28,13 +28,26 @@ class VerifyUserServiceTest {
         "someone@opustix.com",
         "s0", "m0", "s1", "m1",
         "s2", "m2", "s3", "m3",
+        "s4", "m4",
         "statement"
     )
 
+    @Test
+    fun shouldSendApasswordResetEmail() {
+        val service = UserNotificationsService(verifyUserRepository, emailService, emailMessage)
+
+        every { emailService.send(any(), any(), any(), any()) } returns Result.success(
+            SendEmailResponse.builder().build()
+        )
+
+        service.sendPasswordResetEmail("usermail@mail.com", UUID.randomUUID())
+
+        verify { emailService.send(any(), any(), any(), any()) }
+    }
 
     @Test
     fun shouldSendAnEmailToVerifyTheUser() {
-        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+        val service = UserNotificationsService(verifyUserRepository, emailService, emailMessage)
 
         every { verifyUserRepository.findByEmail(any()) } returns null
         every { verifyUserRepository.save(any()) } returns VerifyUser(
@@ -46,7 +59,7 @@ class VerifyUserServiceTest {
             SendEmailResponse.builder().build()
         )
 
-        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
+        service.sendVerificationEmail("email0@to.com", EmailMessageKey.VERIFY_EMAIL)
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.save(any()) }
@@ -55,7 +68,7 @@ class VerifyUserServiceTest {
 
     @Test
     fun shouldSendAnEmailAndUpdateTheToken() {
-        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+        val service = UserNotificationsService(verifyUserRepository, emailService, emailMessage)
 
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
@@ -70,7 +83,7 @@ class VerifyUserServiceTest {
         every { emailService.send(any(), any(), any(), any()) } returns Result.success(
             SendEmailResponse.builder().build()
         )
-        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
+        service.sendVerificationEmail("email0@to.com", EmailMessageKey.VERIFY_EMAIL)
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.save(any()) }
@@ -79,7 +92,7 @@ class VerifyUserServiceTest {
 
     @Test
     fun shouldNotifyASuccessfulVerification() {
-        val service = VerifyUserService(verifyUserRepository, emailService, emailMessage)
+        val service = UserNotificationsService(verifyUserRepository, emailService, emailMessage)
 
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
@@ -91,7 +104,7 @@ class VerifyUserServiceTest {
             SendEmailResponse.builder().build()
         )
 
-        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+        service.sendVerificationEmail("email0@to.com", EmailMessageKey.SUCCESSFULLY_VERIFIED)
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.delete(any()) }
@@ -101,7 +114,7 @@ class VerifyUserServiceTest {
     @Test
     fun shouldNotSendEmailsIfNotEnabledAfterVerified() {
         val service =
-            VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
+            UserNotificationsService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "email@to.com",
@@ -110,7 +123,7 @@ class VerifyUserServiceTest {
 
         every { verifyUserRepository.delete(any()) } returns Unit
 
-        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+        service.sendVerificationEmail("email0@to.com", EmailMessageKey.SUCCESSFULLY_VERIFIED)
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.delete(any()) }
@@ -119,7 +132,7 @@ class VerifyUserServiceTest {
     @Test
     fun shouldNotSendAnEmailAfterSavingWhenNotEnabled() {
         val service =
-            VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
+            UserNotificationsService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
 
         every { verifyUserRepository.findByEmail(any()) } returns VerifyUser(
             UUID.randomUUID(),
@@ -132,7 +145,7 @@ class VerifyUserServiceTest {
             Instant.now().toEpochMilli()
         )
 
-        service.sendVerificationEmail("email0@to.com", VerifyEmailMessageKey.VERIFY_EMAIL)
+        service.sendVerificationEmail("email0@to.com", EmailMessageKey.VERIFY_EMAIL)
 
         verify { verifyUserRepository.findByEmail(any()) }
         verify { verifyUserRepository.save(any()) }
@@ -141,7 +154,7 @@ class VerifyUserServiceTest {
     @Test
     fun shouldFindVerifyUserFromToken() {
         val service =
-            VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
+            UserNotificationsService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
         val token = UUID.randomUUID()
         every { verifyUserRepository.findById(any()) } returns Optional.of(
             VerifyUser(
@@ -160,7 +173,7 @@ class VerifyUserServiceTest {
     @Test
     fun shouldThrowExceptionWhenNotFoundUsingToken() {
         val service =
-            VerifyUserService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
+            UserNotificationsService(verifyUserRepository, emailService, emailMessage.copy(enabled = false))
         val token = UUID.randomUUID()
         every { verifyUserRepository.findById(any()) } returns Optional.empty()
 

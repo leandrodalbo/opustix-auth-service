@@ -1,6 +1,7 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.InvalidUserException
@@ -29,8 +30,8 @@ class AuthServiceTest {
     private val passwordEncoder: PasswordEncoder = mockk()
     private val userRepository: UserRepository = mockk()
     private val tokenManager: TokenManager = mockk()
-    private val verifyUserService: VerifyUserService = mockk()
-    private val authService = AuthService(userRepository, passwordEncoder, tokenManager, verifyUserService)
+    private val notificationsService: UserNotificationsService = mockk()
+    private val authService = AuthService(userRepository, passwordEncoder, tokenManager, notificationsService)
 
     private val signInRequest = SignUpRequest("user@email.com", "Joe Doe", "hashedpassword123")
     private val loginRequest = LoginRequest("user@email.com", "hashedpassword123")
@@ -56,14 +57,14 @@ class AuthServiceTest {
         every { userRepository.findByEmail(any()) } returns null
         every { passwordEncoder.encode(any()) } returns "encodedPassword"
         every { userRepository.save(any<User>()) } returns user
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         authService.signUp(signInRequest)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
         verify { passwordEncoder.encode(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
 
@@ -166,13 +167,13 @@ class AuthServiceTest {
     fun aNewUserIsSavedVerificationEmailIsSent() {
         every { userRepository.findByEmail(any()) } returns null
         every { userRepository.save(any()) } returns user
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         authService.handleOauth(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID(), AuthProvider.GOOGLE)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
@@ -189,7 +190,7 @@ class AuthServiceTest {
     @Test
     fun refreshTokenIsNotSavedForNotVerifiedUsers() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
             .isThrownBy {
@@ -203,7 +204,7 @@ class AuthServiceTest {
 
 
         verify { userRepository.findByEmail(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
 
@@ -211,7 +212,7 @@ class AuthServiceTest {
     fun loginFailForNotVerifiedUsers() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
         every { passwordEncoder.matches(any(), any()) } returns true
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
             .isThrownBy { authService.login(loginRequest) }
@@ -219,44 +220,44 @@ class AuthServiceTest {
 
         verify { userRepository.findByEmail(any()) }
         verify { passwordEncoder.matches(any(), any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
     fun signUpFailedForExistingUserThatIsNotVerified() {
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
             .isThrownBy { authService.signUp(signInRequest) }
             .withMessage(Message.USER_NOT_VERIFIED.text)
 
         verify { userRepository.findByEmail(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
     fun shouldVerifyAnewUser() {
-        every { verifyUserService.findFromToken(any()) } returns VerifyUser(
+        every { notificationsService.findFromToken(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "someuser@mail.com",
             Instant.now().toEpochMilli()
         )
         every { userRepository.findByEmail(any()) } returns user.copy(isVerified = false)
         every { userRepository.save(any()) } returns user.copy(isVerified = true)
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { notificationsService.sendVerificationEmail(any(), any()) } returns Unit
 
         authService.verifyUser(user.id.toString())
 
         verify { userRepository.save(any()) }
         verify { userRepository.findByEmail(any()) }
-        verify { verifyUserService.findFromToken(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
+        verify { notificationsService.findFromToken(any()) }
+        verify { notificationsService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
     fun shouldNotVerifyAUserNotFound() {
-        every { verifyUserService.findFromToken(any()) } returns VerifyUser(
+        every { notificationsService.findFromToken(any()) } returns VerifyUser(
             UUID.randomUUID(),
             "someuser@mail.com",
             Instant.now().toEpochMilli()
@@ -267,6 +268,30 @@ class AuthServiceTest {
             .isThrownBy { authService.verifyUser(user.id.toString()) }
 
         verify { userRepository.findByEmail(any()) }
-        verify { verifyUserService.findFromToken(any()) }
+        verify { notificationsService.findFromToken(any()) }
+    }
+
+    @Test
+    fun passwordResetFailWithoutAValidUser() {
+        every { userRepository.findByEmail(any()) } returns null
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.setPasswordToken(NewPasswordTokenRequest("notauser@mail.com")) }
+            .withMessage(Message.EMAIL_NOT_FOUND.text)
+
+        verify { userRepository.findByEmail(any()) }
+    }
+
+    @Test
+    fun passwordResetEmailIsSentToTheUser() {
+        every { userRepository.findByEmail(any()) } returns user
+        every { userRepository.save(any()) } returns user
+        every { notificationsService.sendPasswordResetEmail(any(), any()) } returns Unit
+
+        authService.setPasswordToken(NewPasswordTokenRequest("user@mail.com"))
+
+        verify { userRepository.findByEmail(any()) }
+        verify { userRepository.save(any()) }
+        verify { notificationsService.sendPasswordResetEmail(any(), any()) }
     }
 }

@@ -1,10 +1,7 @@
 package com.ticketera.auth.integrationtests
 
 import com.ticketera.auth.AbstractContainerTest
-import com.ticketera.auth.dto.request.LoginRequest
-import com.ticketera.auth.dto.request.SignUpRequest
-import com.ticketera.auth.dto.request.UserRoleChange
-import com.ticketera.auth.dto.request.UserRoleRequest
+import com.ticketera.auth.dto.request.*
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
@@ -153,6 +150,20 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
         val resp = restClient.delete()
             .uri("/user/delete")
             .header(HttpHeaders.AUTHORIZATION, "Bearer ${login.body?.accessToken}")
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+
+    @Test
+    fun itShouldSetANewPasswordToken() {
+        val req = NewPasswordTokenRequest("user@example.com")
+        val resp = restClient.put()
+            .uri("/auth/password/token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
             .retrieve()
             .toBodilessEntity()
 

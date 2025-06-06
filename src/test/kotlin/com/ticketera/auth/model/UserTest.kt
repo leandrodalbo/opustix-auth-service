@@ -2,6 +2,8 @@ package com.ticketera.auth.model
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class UserTest {
@@ -87,5 +89,12 @@ class UserTest {
         assertThat(uCopy.withoutRefreshToken(uCopy.refreshTokens.first().token).refreshTokens).isEmpty()
     }
 
-
+    @Test
+    fun thePasswordTokenHasExpired() {
+        val uCopy = user.copy(
+            passwordResetToken = UUID.randomUUID(),
+            passwordResetTokenExpiry = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()
+        )
+        assertThat(uCopy.isPasswordTokenExpired()).isTrue()
+    }
 }

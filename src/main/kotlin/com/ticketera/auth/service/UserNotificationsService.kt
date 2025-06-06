@@ -2,7 +2,7 @@ package com.ticketera.auth.service
 
 import com.ticketera.auth.errors.AuthException
 import com.ticketera.auth.errors.Message
-import com.ticketera.auth.model.VerifyEmailMessageKey
+import com.ticketera.auth.model.EmailMessageKey
 import com.ticketera.auth.model.VerifyUser
 import com.ticketera.auth.props.VerifyEmailMessage
 import com.ticketera.auth.repository.VerifyUserRepository
@@ -13,20 +13,21 @@ import java.util.UUID
 import kotlin.jvm.optionals.getOrElse
 
 @Service
-class VerifyUserService(
+class UserNotificationsService(
     private val verifyUserRepository: VerifyUserRepository,
     private val sendEmailService: EmailService,
     private val emailMessage: VerifyEmailMessage
 
 ) {
 
-    fun sendVerificationEmail(email: String, emailMessageKey: VerifyEmailMessageKey) {
+    fun sendVerificationEmail(email: String, emailMessageKey: EmailMessageKey) {
 
-        if (VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED.equals(emailMessageKey)) {
+        if (EmailMessageKey.SUCCESSFULLY_VERIFIED.equals(emailMessageKey)) {
             verifyUserRepository.delete(
-                verifyUserRepository.findByEmail(email) ?: throw AuthException(Message.VERIFY_SERVICE_FAILED.text)
+                verifyUserRepository.findByEmail(email)
+                    ?: throw AuthException(Message.NOTIFICATIONS_SERVICE_FAILED.text)
             )
-        if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
+            if (emailMessage.enabled) notifyUser(emailMessageKey, email, null)
 
 
         } else {
@@ -42,10 +43,14 @@ class VerifyUserService(
         }
     }
 
-    fun findFromToken(token: String): VerifyUser = verifyUserRepository.findById(UUID.fromString(token))
-        .getOrElse { throw AuthException(Message.VERIFY_SERVICE_FAILED.text) }
+    fun sendPasswordResetEmail(emailTo: String, token: UUID?) {
+        if (emailMessage.enabled) notifyUser(EmailMessageKey.PASSWORD_RESET, emailTo, token)
+    }
 
-    private fun notifyUser(key: VerifyEmailMessageKey, emailTo: String, token: UUID?) {
+    fun findFromToken(token: String): VerifyUser = verifyUserRepository.findById(UUID.fromString(token))
+        .getOrElse { throw AuthException(Message.NOTIFICATIONS_SERVICE_FAILED.text) }
+
+    private fun notifyUser(key: EmailMessageKey, emailTo: String, token: UUID?) {
         subjectAndMessage(key).let {
             sendEmailService.send(
                 emailMessage.from,
@@ -60,11 +65,12 @@ class VerifyUserService(
         "${message}\n${emailMessage.link}?token=${token}"
     } ?: "${message}\n"
 
-    private fun subjectAndMessage(key: VerifyEmailMessageKey): SubjectAndMessage = when (key) {
-        VerifyEmailMessageKey.VERIFY_EMAIL -> SubjectAndMessage(emailMessage.subject0, emailMessage.message0)
-        VerifyEmailMessageKey.NOT_VERIFIED_LOGIN -> SubjectAndMessage(emailMessage.subject1, emailMessage.message1)
-        VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP -> SubjectAndMessage(emailMessage.subject2, emailMessage.message2)
-        VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED -> SubjectAndMessage(emailMessage.subject3, emailMessage.message3)
+    private fun subjectAndMessage(key: EmailMessageKey): SubjectAndMessage = when (key) {
+        EmailMessageKey.VERIFY_EMAIL -> SubjectAndMessage(emailMessage.subject0, emailMessage.message0)
+        EmailMessageKey.NOT_VERIFIED_LOGIN -> SubjectAndMessage(emailMessage.subject1, emailMessage.message1)
+        EmailMessageKey.NOT_VERIFIED_SIGN_UP -> SubjectAndMessage(emailMessage.subject2, emailMessage.message2)
+        EmailMessageKey.SUCCESSFULLY_VERIFIED -> SubjectAndMessage(emailMessage.subject3, emailMessage.message3)
+        EmailMessageKey.PASSWORD_RESET -> SubjectAndMessage(emailMessage.subject4, emailMessage.message4)
     }
 
     private data class SubjectAndMessage(val subject: String, val message: String)
