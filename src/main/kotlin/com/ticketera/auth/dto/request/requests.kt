@@ -28,9 +28,7 @@ data class LoginRequest(val email: String, val pass: String)
 data class NewPasswordTokenRequest(
     @field:Email(message = "Invalid email format")
     @field:NotBlank(message = "Email is required")
-    val email: String,
-
-    )
+    val email: String)
 
 data class NewPasswordRequest(
     @field:NotBlank(message = "Token is required")

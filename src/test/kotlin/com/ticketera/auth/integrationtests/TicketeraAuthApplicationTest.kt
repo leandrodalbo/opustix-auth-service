@@ -1,7 +1,12 @@
 package com.ticketera.auth.integrationtests
 
 import com.ticketera.auth.AbstractContainerTest
-import com.ticketera.auth.dto.request.*
+import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.SignUpRequest
+import com.ticketera.auth.dto.request.UserRoleChange
+import com.ticketera.auth.dto.request.UserRoleRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
+import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.jwt.TokenManager
