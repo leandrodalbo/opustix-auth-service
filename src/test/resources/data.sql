@@ -1,4 +1,4 @@
-INSERT INTO users (email, name, password, roles, auth_provider, is_verified)
+INSERT INTO users (email, name, password, roles, auth_providers, is_verified)
 VALUES (
     'user@example.com',
     'Joe Doe',

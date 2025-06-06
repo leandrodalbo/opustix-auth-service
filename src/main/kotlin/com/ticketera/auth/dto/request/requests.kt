@@ -1,6 +1,7 @@
 package com.ticketera.auth.dto.request
 
 
+import com.ticketera.auth.model.Role
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -25,7 +26,8 @@ data class SignUpRequest(
 
 data class LoginRequest(val email: String, val pass: String)
 
-data class UpdateUserDetails(
-    val name: String?,
-    val password: String?
-)
+data class UserRoleRequest(val email: String, val role: Role, val userRoleChange: UserRoleChange)
+
+enum class UserRoleChange {
+    ADD, REMOVE
+}

@@ -46,7 +46,7 @@ data class User(
     val refreshTokens: Set<RefreshToken> = emptySet()
 ) {
 
-    fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
+    fun roles(): Set<Role> = if (roles.isEmpty()) setOf() else roles.split(",").map { Role.valueOf(it) }.toSet()
 
     fun withAddedRole(role: Role): User {
         val updatedRoles = this.roles() + role
@@ -58,7 +58,8 @@ data class User(
         return this.copy(roles = updatedRoles.joinToString(","))
     }
 
-    fun authProviders(): Set<AuthProvider> = authProviders.split(",").map { AuthProvider.valueOf(it) }.toSet()
+    fun authProviders(): Set<AuthProvider> =
+        if (authProviders.isEmpty()) setOf() else authProviders.split(",").map { AuthProvider.valueOf(it) }.toSet()
 
     fun withAddedAuthProvider(authProvider: AuthProvider): User {
         val updatedProviders = this.authProviders() + authProvider
