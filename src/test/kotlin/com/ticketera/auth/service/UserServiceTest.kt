@@ -48,7 +48,7 @@ class UserServiceTest {
         every { userRepository.save(any()) } returns adminUser
         every { tokenAuth.getAuthenticatedUserEmail() } returns adminUser.email
 
-        userService.setUserRole(UserRoleRequest("user@email.com", Role.MANAGER, UserRoleChange.REMOVE))
+        userService.setUserRole(UserRoleRequest("user@email.com", Role.ADMIN, UserRoleChange.REMOVE))
 
         verify { tokenAuth.getAuthenticatedUserEmail() }
         verify { userRepository.findByEmail(any()) }
