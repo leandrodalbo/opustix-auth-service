@@ -5,15 +5,16 @@ import com.ticketera.auth.dto.request.LoginRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.request.UserRoleChange
 import com.ticketera.auth.dto.request.UserRoleRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
+import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.Message
-import com.ticketera.auth.jwt.TokenManager
 import com.ticketera.auth.model.Role
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
+import org.assertj.core.api.Assertions.assertThatException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -33,14 +34,10 @@ import org.springframework.web.client.RestClient
 @AutoConfigureMockMvc
 class TicketeraAuthApplicationTest : AbstractContainerTest() {
 
-
     @LocalServerPort
     private var port: Int = 0
 
     private lateinit var restClient: RestClient
-
-    @Autowired
-    private lateinit var tokenManager: TokenManager
 
     private val loginRequest = LoginRequest("user@example.com", "0lea@tickets0")
     private val mrDeletionLogin = LoginRequest("deleteuser@example.com", "0lea@tickets0")
@@ -157,6 +154,37 @@ class TicketeraAuthApplicationTest : AbstractContainerTest() {
             .toBodilessEntity()
 
         assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+
+    @Test
+    fun itShouldSetANewPasswordToken() {
+        val req = NewPasswordTokenRequest("user@example.com")
+        val resp = restClient.put()
+            .uri("/auth/password/token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(req)
+            .retrieve()
+            .toBodilessEntity()
+
+        assertThat(resp.statusCode).isEqualTo(HttpStatus.OK)
+    }
+
+    @Test
+    fun itShouldNotSetANewPassword() {
+        val req = NewPasswordRequest("e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd", "0JUST?tryToPass23")
+
+        assertThatException().isThrownBy {
+
+            restClient.put()
+                .uri("/auth/password/new")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(req)
+                .retrieve()
+                .toBodilessEntity()
+
+        }.withMessageContaining(Message.INVALID_TOKEN.text)
+
     }
 
     private fun loginUser() =

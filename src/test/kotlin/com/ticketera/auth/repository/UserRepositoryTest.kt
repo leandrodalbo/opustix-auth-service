@@ -99,4 +99,10 @@ class UserRepositoryTest : AbstractContainerTest() {
             }).isEmpty()
         }
     }
+
+    @Test
+    fun shouldFindAUserByPasswordResetToken() {
+        val user = repository?.findByPasswordResetToken(UUID.fromString("e4b7f7c4-1d8f-4c02-8d4f-3a8f2109c6fd"))
+        assertThat(user?.isPasswordTokenExpired()).isTrue()
+    }
 }

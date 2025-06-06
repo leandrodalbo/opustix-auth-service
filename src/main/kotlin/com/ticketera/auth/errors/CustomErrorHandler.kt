@@ -32,4 +32,10 @@ class CustomErrorHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ex.message)
     }
+
+    @ExceptionHandler(InvalidRoleUpdate::class)
+    fun handleInvalidRoleChange(ex: Exception): ResponseEntity<String> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ex.message)
+    }
 }

@@ -1,6 +1,8 @@
 package com.ticketera.auth.service
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
+import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.errors.Message
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
@@ -13,11 +15,13 @@ import com.ticketera.auth.model.AuthProvider
 import com.ticketera.auth.model.OAuthData
 import com.ticketera.auth.model.AuthPair
 import com.ticketera.auth.model.RefreshTokenCookie
-import com.ticketera.auth.model.VerifyEmailMessageKey
+import com.ticketera.auth.model.EmailMessageKey
 import com.ticketera.auth.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
@@ -25,7 +29,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
     private val tokenManager: TokenManager,
-    private val verifyUserService: VerifyUserService
+    private val notificationsService: UserNotificationsService
 ) {
 
     @Transactional
@@ -94,12 +98,60 @@ class AuthService(
 
     @Transactional
     fun verifyUser(token: String) {
-        val toVerify = verifyUserService.findFromToken(token)
+        val toVerify = notificationsService.findFromToken(token)
         userRepository.findByEmail(toVerify.email)
             ?.let {
                 userRepository.save(it.copy(isVerified = true))
-                verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
+                notificationsService.sendVerificationEmail(toVerify.email, EmailMessageKey.SUCCESSFULLY_VERIFIED)
             } ?: throw AuthException(Message.REQUEST_FAILED.text)
+    }
+
+    @Transactional
+    fun setPasswordToken(newPasswordRequest: NewPasswordTokenRequest) {
+        val user = userRepository.findByEmail(newPasswordRequest.email)
+            ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
+
+        val saved = userRepository.save(
+            user.copy(
+                passwordResetToken = UUID.randomUUID(),
+                passwordResetTokenExpiry = Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
+            )
+        )
+        notificationsService.sendPasswordResetNotifications(
+            user.email,
+            EmailMessageKey.PASSWORD_RESET,
+            saved.passwordResetToken
+        )
+    }
+
+    @Transactional
+    fun setNewPassword(newPasswordRequest: NewPasswordRequest) {
+        val user = userRepository.findByPasswordResetToken(UUID.fromString(newPasswordRequest.token))
+            ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
+
+        if (user.isPasswordTokenExpired()) {
+            userRepository.save(
+                user.copy(
+                    passwordResetToken = null,
+                    passwordResetTokenExpiry = null
+                )
+            )
+            throw InvalidUserException(Message.INVALID_TOKEN.text)
+        }
+
+        val saved = userRepository.save(
+            user.copy(
+                password = passwordEncoder.encode(newPasswordRequest.pass),
+                passwordResetToken = null,
+                passwordResetTokenExpiry = null
+            )
+        )
+
+        notificationsService.sendPasswordResetNotifications(
+            user.email,
+            EmailMessageKey.PASSWORD_CHANGED,
+            saved.passwordResetToken
+        )
     }
 
     private fun localLoginValidation(user: User, req: LoginRequest) {
@@ -110,14 +162,14 @@ class AuthService(
         ) throw InvalidUserException(Message.INVALID_PASSWORD.text)
 
         if (!user.isVerified) {
-            verifyUserService.sendVerificationEmail(req.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
+            notificationsService.sendVerificationEmail(req.email, EmailMessageKey.NOT_VERIFIED_LOGIN)
             throw AuthException(Message.USER_NOT_VERIFIED.text)
         }
     }
 
     private fun oAuthLogin(user: User, authProvider: AuthProvider, refreshToken: UUID): User {
         if (!user.isVerified) {
-            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
+            notificationsService.sendVerificationEmail(user.email, EmailMessageKey.NOT_VERIFIED_LOGIN)
             throw AuthException(Message.USER_NOT_VERIFIED.text)
         }
 
@@ -141,7 +193,7 @@ class AuthService(
         ).withNewRefreshToken(refreshToken)
 
         val savedUser = userRepository.save(user)
-        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        notificationsService.sendVerificationEmail(user.email, EmailMessageKey.VERIFY_EMAIL)
         return savedUser
     }
 
@@ -157,12 +209,12 @@ class AuthService(
                 false
             )
         )
-        verifyUserService.sendVerificationEmail(signUpRequest.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        notificationsService.sendVerificationEmail(signUpRequest.email, EmailMessageKey.VERIFY_EMAIL)
     }
 
     private fun signUpAddingLocalAuth(signUpRequest: SignUpRequest, user: User) {
         if (!user.isVerified) {
-            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
+            notificationsService.sendVerificationEmail(user.email, EmailMessageKey.NOT_VERIFIED_SIGN_UP)
             throw AuthException(Message.USER_NOT_VERIFIED.text)
         }
 
@@ -176,9 +228,8 @@ class AuthService(
                     )
                     .withAddedAuthProvider(AuthProvider.LOCAL)
             )
-            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+            notificationsService.sendVerificationEmail(user.email, EmailMessageKey.VERIFY_EMAIL)
         } else
             throw AuthException(Message.EMAIL_IN_USE.text)
     }
-
 }

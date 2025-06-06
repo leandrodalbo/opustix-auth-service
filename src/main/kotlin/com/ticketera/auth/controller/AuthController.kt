@@ -1,6 +1,8 @@
 package com.ticketera.auth.controller
 
 import com.ticketera.auth.dto.request.LoginRequest
+import com.ticketera.auth.dto.request.NewPasswordRequest
+import com.ticketera.auth.dto.request.NewPasswordTokenRequest
 import com.ticketera.auth.dto.request.SignUpRequest
 import com.ticketera.auth.dto.response.LoginResponse
 import com.ticketera.auth.errors.InvalidUserException
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RequestParam
 
@@ -57,4 +60,12 @@ class AuthController(private val authService: AuthService) {
     @GetMapping("/verify")
     fun verify(@RequestParam token: String) =
         authService.verifyUser(token)
+
+    @PutMapping("/password/token")
+    fun passwordToken(@Valid @RequestBody newPasswordTokenRequest: NewPasswordTokenRequest) =
+        authService.setPasswordToken(newPasswordTokenRequest)
+
+    @PutMapping("/password/new")
+    fun newPassword(@Valid @RequestBody newPasswordRequest: NewPasswordRequest) =
+        authService.setNewPassword(newPasswordRequest)
 }

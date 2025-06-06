@@ -43,7 +43,13 @@ data class User(
     val isVerified: Boolean,
 
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val refreshTokens: Set<RefreshToken> = emptySet()
+    val refreshTokens: Set<RefreshToken> = emptySet(),
+
+    @Column(name = "password_reset_token")
+    var passwordResetToken: UUID? = null,
+
+    @Column(name = "password_reset_token_expiry")
+    var passwordResetTokenExpiry: Long? = null
 ) {
 
     fun roles(): Set<Role> = if (roles.isEmpty()) setOf() else roles.split(",").map { Role.valueOf(it) }.toSet()
@@ -98,6 +104,8 @@ data class User(
 
         return Base64.getEncoder().encodeToString(mapper.writeValueAsBytes(data))
     }
+
+    fun isPasswordTokenExpired() = passwordResetTokenExpiry?.let { Instant.now().toEpochMilli() > it } ?: false
 
     companion object {
 
