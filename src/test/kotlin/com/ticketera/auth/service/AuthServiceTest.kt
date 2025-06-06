@@ -308,7 +308,22 @@ class AuthServiceTest {
     }
 
     @Test
-    fun aPasswordIsSavedForTheUser() {
+    fun passwordIsNotSavedWithAnExpiredToken() {
+        every { userRepository.findByPasswordResetToken(any()) } returns user.copy(
+            passwordResetTokenExpiry = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()
+        )
+        every { userRepository.save(any()) } returns user
+
+        assertThatExceptionOfType(InvalidUserException::class.java)
+            .isThrownBy { authService.setNewPassword(NewPasswordRequest(UUID.randomUUID().toString(), "0NO88pass?0")) }
+            .withMessage(Message.INVALID_TOKEN.text)
+
+        verify { userRepository.save(any()) }
+        verify { userRepository.findByPasswordResetToken(any()) }
+    }
+
+    @Test
+    fun passwordIsSavedForTheUser() {
         every { userRepository.findByPasswordResetToken(any()) } returns user
         every { userRepository.save(any()) } returns user
         every { notificationsService.sendPasswordResetNotifications(any(), any(), any()) } returns Unit

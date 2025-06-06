@@ -129,6 +129,16 @@ class AuthService(
         val user = userRepository.findByPasswordResetToken(UUID.fromString(newPasswordRequest.token))
             ?: throw InvalidUserException(Message.INVALID_TOKEN.text)
 
+        if (user.isPasswordTokenExpired()) {
+            userRepository.save(
+                user.copy(
+                    passwordResetToken = null,
+                    passwordResetTokenExpiry = null
+                )
+            )
+            throw InvalidUserException(Message.INVALID_TOKEN.text)
+        }
+
         val saved = userRepository.save(
             user.copy(
                 password = passwordEncoder.encode(newPasswordRequest.pass),
