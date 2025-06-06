@@ -33,7 +33,7 @@ class OAuth2Handler(
     ) {
         val oAuthData = this.extractAuthData(authentication.principal as OAuth2User)
         val refreshToken = UUID.randomUUID()
-        val user = authService.oauthSignUp(oAuthData, refreshToken, AuthProvider.GOOGLE)
+        val user = authService.handleOauth(oAuthData, refreshToken, AuthProvider.GOOGLE)
         val loginResponse = LoginResponse(tokenManager.generateToken(user))
 
         response.contentType = MediaType.APPLICATION_JSON_VALUE
