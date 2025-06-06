@@ -33,12 +33,12 @@ class UserRepositoryTest : AbstractContainerTest() {
         assertThat(user?.name).isNotNull()
         assertThat(user?.password).isNotNull()
         assertThat(user?.roles()).contains(Role.USER)
-        assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+        assertThat(user?.authProviders()).contains(AuthProvider.LOCAL)
 
     }
 
     @Test
-    fun shouldAllUsers() {
+    fun shouldFetchAllUsers() {
         val user = repository?.findAll()?.get(0)
 
         assertThat(user?.id).isNotNull()
@@ -46,7 +46,7 @@ class UserRepositoryTest : AbstractContainerTest() {
         assertThat(user?.email).isNotNull()
         assertThat(user?.password).isNotNull()
         assertThat(user?.roles()).contains(Role.USER)
-        assertThat(user?.authProvider).isEqualTo(AuthProvider.LOCAL)
+        assertThat(user?.authProviders()).contains(AuthProvider.LOCAL)
 
     }
 
@@ -62,7 +62,6 @@ class UserRepositoryTest : AbstractContainerTest() {
             assertThat(updatedUser?.refreshTokens?.filter {
                 it.token == token
             }).isNotEmpty
-
         }
     }
 

@@ -1,10 +1,20 @@
-INSERT INTO users (email, name, password, roles, auth_provider, is_verified)
+INSERT INTO users (email, name, password, roles, auth_providers, is_verified)
 VALUES (
     'user@example.com',
     'Joe Doe',
     '$2a$10$99iX1E/3VQMHltZ3s4dzPeoPNd78p9hOwOblqgeSQ96XP3/zAaJEa',
     'USER,ADMIN',
     'LOCAL',
+    true
+);
+
+INSERT INTO users (email, name, password, roles, auth_providers, is_verified)
+VALUES (
+    'deleteuser@example.com',
+    'Mr. deletion',
+    '$2a$10$99iX1E/3VQMHltZ3s4dzPeoPNd78p9hOwOblqgeSQ96XP3/zAaJEa',
+    'USER',
+    'GOOGLE',
     true
 );
 

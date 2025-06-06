@@ -37,16 +37,16 @@ class AuthServiceTest {
 
     private val user = User(
         UUID.randomUUID(), "user@email.com", "Joe Doe", "encodedPassword",
-        Role.USER.name, AuthProvider.LOCAL, true
+        Role.USER.name, AuthProvider.LOCAL.name, true
     )
 
     @Test
     fun registrationFailIfEmailIsAlreadyInUse() {
         every { userRepository.findByEmail(any()) } returns user
 
-        assertThatExceptionOfType(IllegalArgumentException::class.java)
+        assertThatExceptionOfType(AuthException::class.java)
             .isThrownBy { authService.signUp(signInRequest) }
-            .withMessage("Email already in use")
+            .withMessage(Message.EMAIL_IN_USE.text)
 
         verify { userRepository.findByEmail(any()) }
     }
@@ -168,7 +168,7 @@ class AuthServiceTest {
         every { userRepository.save(any()) } returns user
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
-        authService.findOrCreateUser(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID())
+        authService.handleOauth(OAuthData("newuser@gmail.com", "Joe Doe"), UUID.randomUUID(), AuthProvider.GOOGLE)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
@@ -177,15 +177,13 @@ class AuthServiceTest {
 
     @Test
     fun newRefreshTokenForAnExistingUser() {
-        every { userRepository.findByEmail(any()) } returns user
-        every { userRepository.save(any()) } returns user
-        every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
+        every { userRepository.findByEmail(any()) } returns user.withAddedAuthProvider(AuthProvider.GOOGLE)
+        every { userRepository.save(any()) } returns user.withAddedAuthProvider(AuthProvider.GOOGLE)
 
-        authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID())
+        authService.handleOauth(OAuthData(user.email, user.name), UUID.randomUUID(), AuthProvider.GOOGLE)
 
         verify { userRepository.findByEmail(any()) }
         verify { userRepository.save(any()) }
-        verify { verifyUserService.sendVerificationEmail(any(), any()) }
     }
 
     @Test
@@ -194,7 +192,13 @@ class AuthServiceTest {
         every { verifyUserService.sendVerificationEmail(any(), any()) } returns Unit
 
         assertThatExceptionOfType(AuthException::class.java)
-            .isThrownBy { authService.findOrCreateUser(OAuthData(user.email, user.name), UUID.randomUUID()) }
+            .isThrownBy {
+                authService.handleOauth(
+                    OAuthData(user.email, user.name),
+                    UUID.randomUUID(),
+                    AuthProvider.GOOGLE
+                )
+            }
             .withMessage(Message.USER_NOT_VERIFIED.text)
 
 

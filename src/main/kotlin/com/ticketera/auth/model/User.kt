@@ -9,10 +9,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Column
-import jakarta.persistence.Enumerated
 import jakarta.persistence.OneToMany
 import jakarta.persistence.CascadeType
-import jakarta.persistence.EnumType
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -38,9 +36,8 @@ data class User(
     @Column(name = "roles", nullable = false)
     val roles: String = "",
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false)
-    val authProvider: AuthProvider,
+    @Column(name = "auth_providers", nullable = false)
+    val authProviders: String,
 
     @Column(name = "is_verified", nullable = false)
     val isVerified: Boolean,
@@ -49,52 +46,24 @@ data class User(
     val refreshTokens: Set<RefreshToken> = emptySet()
 ) {
 
-    fun roles(): Set<Role> = roles.split(",").map { Role.valueOf(it) }.toSet()
+    fun roles(): Set<Role> = if (roles.isEmpty()) setOf() else roles.split(",").map { Role.valueOf(it) }.toSet()
 
-    fun withRoles(roles: Set<Role>) =
-        copy(this.id, this.email, this.name, this.password, roles.joinToString(","), this.authProvider, this.isVerified)
-
-    fun encoded(): String {
-        val data = EncodedUser(
-            email,
-            name,
-            roles,
-            authProvider.name,
-            isVerified,
-            Instant.now().toEpochMilli()
-        )
-
-        return Base64.getEncoder().encodeToString(mapper.writeValueAsBytes(data))
+    fun withAddedRole(role: Role): User {
+        val updatedRoles = this.roles() + role
+        return this.copy(roles = updatedRoles.joinToString(","))
     }
 
+    fun withoutRole(role: Role): User {
+        val updatedRoles = this.roles().filter { it != role }
+        return this.copy(roles = updatedRoles.joinToString(","))
+    }
 
-    companion object {
+    fun authProviders(): Set<AuthProvider> =
+        if (authProviders.isEmpty()) setOf() else authProviders.split(",").map { AuthProvider.valueOf(it) }.toSet()
 
-        private data class EncodedUser
-        @JsonCreator constructor(
-            @JsonProperty("email") val email: String,
-            @JsonProperty("name") val name: String,
-            @JsonProperty("roles") val roles: String,
-            @JsonProperty("authProvider") val authProvider: String,
-            @JsonProperty("verified") val isVerified: Boolean,
-            @JsonProperty("timestamp") val timestamp: Long
-        )
-
-        fun decode(data: String): User {
-            val decoded = Base64.getDecoder().decode(data)
-            val userData = mapper.readValue(decoded, EncodedUser::class.java)
-            return User(
-                null,
-                userData.email,
-                userData.name,
-                "",
-                userData.roles,
-                AuthProvider.valueOf(userData.authProvider),
-                userData.isVerified
-            )
-        }
-
-        private val mapper = ObjectMapper()
+    fun withAddedAuthProvider(authProvider: AuthProvider): User {
+        val updatedProviders = this.authProviders() + authProvider
+        return this.copy(authProviders = updatedProviders.joinToString(","))
     }
 
     fun withNewRefreshToken(refreshToken: UUID): User {
@@ -116,4 +85,46 @@ data class User(
 
     override fun equals(other: Any?) = this === other || (other is User && id == other.id)
     override fun hashCode() = id.hashCode()
+
+    fun encoded(): String {
+        val data = EncodedUser(
+            email,
+            name,
+            roles,
+            authProviders,
+            isVerified,
+            Instant.now().toEpochMilli()
+        )
+
+        return Base64.getEncoder().encodeToString(mapper.writeValueAsBytes(data))
+    }
+
+    companion object {
+
+        private data class EncodedUser
+        @JsonCreator constructor(
+            @JsonProperty("email") val email: String,
+            @JsonProperty("name") val name: String,
+            @JsonProperty("roles") val roles: String,
+            @JsonProperty("authProviders") val authProviders: String,
+            @JsonProperty("verified") val isVerified: Boolean,
+            @JsonProperty("timestamp") val timestamp: Long
+        )
+
+        fun decode(data: String): User {
+            val decoded = Base64.getDecoder().decode(data)
+            val userData = mapper.readValue(decoded, EncodedUser::class.java)
+            return User(
+                null,
+                userData.email,
+                userData.name,
+                "",
+                userData.roles,
+                userData.authProviders,
+                userData.isVerified
+            )
+        }
+
+        private val mapper = ObjectMapper()
+    }
 }

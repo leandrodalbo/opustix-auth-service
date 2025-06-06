@@ -68,7 +68,7 @@ class AuthService(
         val user = userRepository.findByEmail(request.email) ?: throw InvalidUserException(Message.EMAIL_NOT_FOUND.text)
         val refreshToken = UUID.randomUUID()
 
-        validateLogin(user, request)
+        localLoginValidation(user, request)
 
         userRepository.save(user.withNewRefreshToken(refreshToken))
 
@@ -79,46 +79,18 @@ class AuthService(
     }
 
     @Transactional
-    fun signUp(signInRequest: SignUpRequest) {
-        validateSignUp(signInRequest)
-        val user = User(
-            null,
-            signInRequest.email,
-            signInRequest.name,
-            passwordEncoder.encode(signInRequest.pass),
-            Role.USER.name,
-            AuthProvider.LOCAL,
-            false
-        )
-
-        userRepository.save(user)
-        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-
-    }
+    fun signUp(signUpRequest: SignUpRequest) =
+        userRepository.findByEmail(signUpRequest.email)
+            ?.let {
+                signUpAddingLocalAuth(signUpRequest, it)
+            } ?: newLocalSignUp(signUpRequest)
 
     @Transactional
-    fun findOrCreateUser(authData: OAuthData, refreshToken: UUID): User {
-        val user = userRepository.findByEmail(authData.email)?.let {
-            if (!it.isVerified) {
-                verifyUserService.sendVerificationEmail(it.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
-                throw AuthException(Message.USER_NOT_VERIFIED.text)
-            } else {
-                it
-            }
-        } ?: userRepository.save(
-            User(
-                email = authData.email,
-                name = authData.name,
-                password = "",
-                roles = Role.USER.name,
-                authProvider = AuthProvider.GOOGLE,
-                isVerified = false
-            )
-        )
-        userRepository.save(user.withNewRefreshToken(refreshToken))
-        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
-        return user
-    }
+    fun handleOauth(authData: OAuthData, refreshToken: UUID, authProvider: AuthProvider) =
+        userRepository.findByEmail(authData.email)?.let {
+            oAuthLogin(it, authProvider, refreshToken)
+        } ?: oAuthSignup(authData, authProvider, refreshToken)
+
 
     @Transactional
     fun verifyUser(token: String) {
@@ -126,12 +98,11 @@ class AuthService(
         userRepository.findByEmail(toVerify.email)
             ?.let {
                 userRepository.save(it.copy(isVerified = true))
+                verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
             } ?: throw AuthException(Message.REQUEST_FAILED.text)
-
-        verifyUserService.sendVerificationEmail(toVerify.email, VerifyEmailMessageKey.SUCCESSFULLY_VERIFIED)
     }
 
-    private fun validateLogin(user: User, req: LoginRequest) {
+    private fun localLoginValidation(user: User, req: LoginRequest) {
         if (!passwordEncoder.matches(
                 req.pass,
                 user.password
@@ -144,13 +115,70 @@ class AuthService(
         }
     }
 
-    private fun validateSignUp(req: SignUpRequest) {
-        userRepository.findByEmail(req.email)?.let {
-            if (it.isVerified) throw IllegalArgumentException(Message.EMAIL_IN_USE.text)
-            else {
-                verifyUserService.sendVerificationEmail(req.email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
-                throw AuthException(Message.USER_NOT_VERIFIED.text)
-            }
+    private fun oAuthLogin(user: User, authProvider: AuthProvider, refreshToken: UUID): User {
+        if (!user.isVerified) {
+            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.NOT_VERIFIED_LOGIN)
+            throw AuthException(Message.USER_NOT_VERIFIED.text)
         }
+
+        return if (!user.authProviders().contains(authProvider))
+            userRepository.save(
+                user.withAddedAuthProvider(authProvider)
+                    .withNewRefreshToken(refreshToken)
+            )
+        else
+            userRepository.save(user.withNewRefreshToken(refreshToken))
     }
+
+    private fun oAuthSignup(authData: OAuthData, authProvider: AuthProvider, refreshToken: UUID): User {
+        val user = User(
+            email = authData.email,
+            name = authData.name,
+            password = "",
+            roles = Role.USER.name,
+            authProviders = authProvider.name,
+            isVerified = false
+        ).withNewRefreshToken(refreshToken)
+
+        val savedUser = userRepository.save(user)
+        verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        return savedUser
+    }
+
+    private fun newLocalSignUp(signUpRequest: SignUpRequest) {
+        userRepository.save(
+            User(
+                null,
+                signUpRequest.email,
+                signUpRequest.name,
+                passwordEncoder.encode(signUpRequest.pass),
+                Role.USER.name,
+                AuthProvider.LOCAL.name,
+                false
+            )
+        )
+        verifyUserService.sendVerificationEmail(signUpRequest.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+    }
+
+    private fun signUpAddingLocalAuth(signUpRequest: SignUpRequest, user: User) {
+        if (!user.isVerified) {
+            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.NOT_VERIFIED_SIGN_UP)
+            throw AuthException(Message.USER_NOT_VERIFIED.text)
+        }
+
+        if (!user.authProviders().contains(AuthProvider.LOCAL)) {
+            userRepository.save(
+                user
+                    .copy(
+                        name = signUpRequest.name,
+                        password = passwordEncoder.encode(signUpRequest.pass),
+                        isVerified = false
+                    )
+                    .withAddedAuthProvider(AuthProvider.LOCAL)
+            )
+            verifyUserService.sendVerificationEmail(user.email, VerifyEmailMessageKey.VERIFY_EMAIL)
+        } else
+            throw AuthException(Message.EMAIL_IN_USE.text)
+    }
+
 }
